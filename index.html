@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NumLock</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Monospace for Dev Mode -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+    <style>
+        /* =========================================
+           FILE: style.css
+           ========================================= */
+
+        :root {
+            /* Default: Minimalist Dark Theme (Zinc Palette) */
+            --bg-body: #09090b;
+            --bg-card: #18181b;
+            --bg-slot: #121212;
+            
+            --border-subtle: #27272a;
+            --border-active: #52525b;
+            
+            --text-main: #fafafa;
+            --text-muted: #a1a1aa;
+            
+            --accent-primary: #ffffff;
+            --accent-bg: #000000;
+            
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            transition: background-color 0.8s ease, color 0.5s ease;
+        }
+
+        /* --- DYNAMIC PRESSURE STATES --- */
+        
+        body.pressure-5 { --bg-body: #1c1917; --bg-card: #292524; --border-active: #78716c; }
+        body.pressure-6 { --bg-body: #281205; --bg-card: #431407; --border-active: #a64626; }
+        body.pressure-7 { --bg-body: #380808; --bg-card: #551010; --border-active: #b91c1c; }
+        body.pressure-8 { --bg-body: #450a0a; --bg-card: #601414; --accent-primary: #fca5a5; --accent-bg: #450a0a; }
+        body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda4af; --accent-bg: #881337; }
+        
+        /* Win state removed from CSS to keep default minimalist look */
+
+        /* --- DOOM STATE (Impossible Roll) --- */
+        body.state-doom {
+            transition: background-color 3s ease;
+            /* Revert vars to default for the fade out effect */
+            --bg-body: #09090b; 
+            --bg-card: #18181b; 
+            --border-active: #52525b; 
+            --accent-primary: #ffffff; 
+            --accent-bg: #000000;
+        }
+
+        /* Apply the doom filter to game elements EXCEPT the footer/reset button */
+        body.state-doom header,
+        body.state-doom .roll-stage,
+        body.state-doom .slots-grid {
+            filter: grayscale(1) brightness(0.6) contrast(1.1);
+            transition: filter 3s ease;
+        }
+
+        /* Transition for elements to support the slow fade */
+        header, .roll-stage, .slots-grid {
+            transition: filter 0.5s ease;
+        }
+
+        /* --- LAYOUT --- */
+        .game-wrapper {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        header { margin-bottom: 30px; }
+        header h1 { font-weight: 700; margin: 0; font-size: 1.5rem; color: var(--text-main); }
+        header p { color: var(--text-muted); margin-top: 8px; font-size: 0.9rem; }
+
+        /* --- DEV INDICATOR --- */
+        .dev-indicator {
+            position: fixed; top: 20px; right: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-primary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+            z-index: 200;
+        }
+        .dev-indicator.visible { opacity: 1; }
+
+        /* --- STAGE AREA --- */
+        .roll-stage { display: flex; justify-content: center; margin-bottom: 30px; }
+        .roll-card { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .number-display {
+            font-size: 5rem; font-weight: 300; line-height: 1; margin: 0;
+            color: var(--text-main); font-variant-numeric: tabular-nums;
+            letter-spacing: -2px; min-height: 80px; display: inline-block;
+        }
+        .rolling .number-display { opacity: 0.7; }
+
+        /* --- ANIMATIONS --- */
+        @keyframes shake-light {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(1px, 1px); }
+            75% { transform: translate(-1px, -1px); }
+        }
+        @keyframes shake-med {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-2px, 2px); }
+            60% { transform: translate(2px, -2px); }
+        }
+        @keyframes shake-heavy {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(3px, -3px) rotate(2deg); }
+            50% { transform: translate(-3px, 3px) rotate(-2deg); }
+            80% { transform: translate(2px, -2px) rotate(1deg); }
+        }
+
+        .shake-lvl-1 { animation: shake-light 0.5s infinite; }
+        .shake-lvl-2 { animation: shake-med 0.3s infinite; }
+        .shake-lvl-3 { animation: shake-heavy 0.15s infinite; }
+
+        /* --- BUTTONS --- */
+        button {
+            border: none; padding: 14px 28px; border-radius: 6px;
+            font-weight: 500; font-size: 0.9rem; cursor: pointer;
+            font-family: inherit; transition: all 0.3s ease;
+        }
+
+        #roll-btn { background: var(--accent-primary); color: var(--accent-bg); margin-top: 20px; }
+        #roll-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-2px); }
+        #roll-btn:disabled { background: var(--border-subtle); color: var(--text-muted); cursor: not-allowed; transform: none; }
+
+        .secondary-btn {
+            background: transparent; color: var(--text-muted);
+            border: 1px solid var(--border-subtle); margin-top: 40px; font-size: 0.8rem;
+        }
+        .secondary-btn:hover { border-color: var(--text-main); color: var(--text-main); }
+
+        /* CRITICAL RESET STATE (Dead End) */
+        .secondary-btn.btn-critical {
+            border-color: var(--error) !important;
+            color: var(--error) !important;
+            background: rgba(239, 68, 68, 0.1);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+            font-weight: 700;
+            transform: scale(1.05);
+            animation: pulse-crit 2s infinite;
+        }
+        
+        @keyframes pulse-crit {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* --- SLOTS --- */
+        .slots-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 10px; }
+        
+        .slot {
+            aspect-ratio: 1/1; background: var(--bg-slot);
+            border: 1px solid var(--border-subtle); border-radius: 8px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: default; /* Disabled by default */
+            pointer-events: none; /* Unclickable by default */
+            transition: all 0.2s; position: relative;
+        }
+        .slot-idx { font-size: 0.65rem; color: var(--border-active); position: absolute; top: 6px; left: 8px; }
+        .slot-val { font-size: 1.1rem; font-weight: 500; color: var(--text-main); }
+        
+        /* Only valid slots become clickable */
+        .slot.active-target { cursor: pointer; pointer-events: auto; }
+        .slot.active-target:hover { border-color: var(--text-muted); background: var(--bg-card); }
+        
+        .slot.filled { background: var(--bg-card); border-color: var(--border-active); cursor: default; }
+
+        /* --- MODAL --- */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
+        .overlay.visible { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: var(--bg-body); padding: 40px; border-radius: 12px;
+            text-align: center; max-width: 350px; width: 90%;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transform: scale(0.95); transition: transform 0.2s;
+        }
+        .overlay.visible .modal { transform: scale(1); }
+        .modal h2 { margin: 0 0 10px 0; font-size: 1.5rem; color: var(--text-main); }
+        .modal p { color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem; line-height: 1.5; }
+        .modal-btn { background: var(--text-main); color: var(--bg-body); width: 100%; }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+        
+        @media (max-width: 500px) {
+            .slots-grid { grid-template-columns: repeat(2, 1fr); }
+            .number-display { font-size: 4rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confetti-canvas"></canvas>
+    <div id="dev-indicator" class="dev-indicator">DEVMODE</div>
+
+    <div class="game-wrapper">
+        <header>
+            <h1>NumLock</h1>
+            <p>Sort random numbers in ascending order.</p>
+        </header>
+
+        <section class="roll-stage">
+            <div class="roll-card">
+                <div id="current-roll-display" class="number-display">?</div>
+                <button id="roll-btn">Roll Number</button>
+            </div>
+        </section>
+
+        <main id="slots-grid" class="slots-grid">
+            <!-- Slots generated via JS -->
+        </main>
+
+        <footer>
+            <button id="reset-btn" class="secondary-btn">Reset Game</button>
+        </footer>
+    </div>
+
+    <!-- Win/Loss Overlay -->
+    <div id="modal-overlay" class="overlay">
+        <div class="modal">
+            <h2 id="modal-title">Game Over</h2>
+            <p id="modal-message">Sequence error.</p>
+            <button class="modal-btn" onclick="location.reload()">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================
+           FILE: script.js
+           ========================================= */
+
+        const TOTAL_SLOTS = 10;
+        const MAX_NUMBER = 1000;
+        const CHEAT_CODE = "wingame";
+
+        let slots = Array(TOTAL_SLOTS).fill(null);
+        let currentRoll = null;
+        let gameOver = false;
+        let cheatBuffer = "";
+        let audioCtx;
+        let currentScore = 0;
+
+        const slotsGrid = document.getElementById('slots-grid');
+        const rollBtn = document.getElementById('roll-btn');
+        const rollDisplay = document.getElementById('current-roll-display');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const resetBtn = document.getElementById('reset-btn');
+        const devIndicator = document.getElementById('dev-indicator');
+
+        function init() {
+            slotsGrid.innerHTML = '';
+            slots = Array(TOTAL_SLOTS).fill(null);
+            currentRoll = null;
+            gameOver = false;
+            cheatBuffer = "";
+            currentScore = 0;
+            
+            // Reset Atmosphere & Visuals
+            document.body.className = '';
+            devIndicator.classList.remove('visible');
+            rollDisplay.className = 'number-display'; 
+            resetBtn.classList.remove('btn-critical');
+            
+            for (let i = 0; i < TOTAL_SLOTS; i++) {
+                const slotDiv = document.createElement('div');
+                slotDiv.classList.add('slot');
+                slotDiv.dataset.index = i; 
+                slotDiv.innerHTML = `<span class="slot-idx">${i + 1}</span><span class="slot-val"></span>`;
+                slotDiv.addEventListener('click', () => handleSlotClick(i));
+                slotsGrid.appendChild(slotDiv);
+            }
+            
+            rollDisplay.textContent = "?";
+            rollBtn.disabled = false;
+        }
+
+        // Minimalist Audio
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playTick() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function rollNumber() {
+            if (gameOver || currentRoll !== null) return;
+            initAudio();
+            rollBtn.disabled = true;
+            document.querySelector('.roll-card').classList.add('rolling');
+            
+            // Reset doom state just in case
+            document.body.classList.remove('state-doom');
+            
+            let iterations = 0;
+            const finalResult = Math.floor(Math.random() * MAX_NUMBER) + 1;
+
+            const shuffleInterval = setInterval(() => {
+                playTick();
+                rollDisplay.textContent = Math.floor(Math.random() * MAX_NUMBER) + 1;
+                iterations++;
+
+                if (iterations >= 12) {
+                    clearInterval(shuffleInterval);
+                    currentRoll = finalResult;
+                    rollDisplay.textContent = currentRoll;
+                    document.querySelector('.roll-card').classList.remove('rolling');
+                    
+                    // --- DEAD END DETECTION ---
+                    if (!canPlaceAnywhere(currentRoll)) {
+                        // 1. Trigger Doom Fade
+                        document.body.classList.add('state-doom');
+                        
+                        // 2. Stop Shaking
+                        rollDisplay.classList.remove('shake-lvl-1', 'shake-lvl-2', 'shake-lvl-3');
+                        
+                        // 3. Highlight Reset Button (Critical)
+                        resetBtn.classList.add('btn-critical');
+                        
+                        // 4. Set Game Over Logic (Silent fail, no modal)
+                        gameOver = true;
+                        
+                    } else {
+                        enableValidSlots(); 
+                    }
+                }
+            }, 50);
+        }
+
+        function canPlaceAnywhere(val) {
+            for (let i = 0; i < TOTAL_SLOTS; i++) {
+                if (slots[i] === null && isValidPlacement(i, val)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function handleSlotClick(index) {
+            if (gameOver) return; // Silent return if dead end reached
+            if (currentRoll === null) {
+                shakeUI(rollBtn);
+                return;
+            }
+            if (slots[index] !== null) return; 
+
+            if (isValidPlacement(index, currentRoll)) {
+                placeNumber(index, currentRoll);
+                
+                if (slots.every(s => s !== null)) {
+                    triggerWin();
+                } else {
+                    currentRoll = null;
+                    rollDisplay.textContent = "?";
+                    rollBtn.disabled = false;
+                    disableSlots();
+                }
+            } else {
+                triggerLoss(currentRoll);
+            }
+        }
+
+        function placeNumber(index, val) {
+            slots[index] = val;
+            const slotEl = slotsGrid.children[index];
+            slotEl.querySelector('.slot-val').textContent = val;
+            slotEl.classList.add('filled');
+            slotEl.classList.remove('active-target');
+            
+            currentScore++;
+            updatePressure(currentScore);
+        }
+
+        function updatePressure(score) {
+            document.body.className = '';
+            rollDisplay.classList.remove('shake-lvl-1', 'shake-lvl-2', 'shake-lvl-3');
+            
+            if (score === 5) document.body.classList.add('pressure-5');
+            else if (score === 6) document.body.classList.add('pressure-6');
+            else if (score === 7) document.body.classList.add('pressure-7');
+            else if (score === 8) document.body.classList.add('pressure-8');
+            else if (score === 9) document.body.classList.add('pressure-9');
+            
+            // Score 10 (Win) now defaults to no extra class (minimalist)
+            
+            if (score === 7) rollDisplay.classList.add('shake-lvl-1');
+            if (score === 8) rollDisplay.classList.add('shake-lvl-2');
+            if (score === 9) rollDisplay.classList.add('shake-lvl-3');
+        }
+
+        function isValidPlacement(index, val) {
+            for (let i = 0; i < index; i++) 
+                if (slots[i] !== null && slots[i] >= val) return false;
+            for (let i = index + 1; i < TOTAL_SLOTS; i++) 
+                if (slots[i] !== null && slots[i] <= val) return false;
+            return true;
+        }
+
+        function enableValidSlots() {
+            Array.from(slotsGrid.children).forEach((slot, i) => {
+                // Only enable if slot is empty AND valid for the current roll
+                if (slots[i] === null && isValidPlacement(i, currentRoll)) {
+                    slot.classList.add('active-target');
+                } else {
+                    slot.classList.remove('active-target');
+                }
+            });
+        }
+
+        function disableSlots() {
+            Array.from(slotsGrid.children).forEach(slot => slot.classList.remove('active-target'));
+        }
+
+        function shakeUI(element) {
+            element.animate([
+                { transform: 'translateX(0)' },
+                { transform: 'translateX(-4px)' },
+                { transform: 'translateX(4px)' },
+                { transform: 'translateX(0)' }
+            ], { duration: 300 });
+        }
+
+        function triggerWin() {
+            gameOver = true;
+            modalTitle.textContent = "Completed";
+            modalTitle.style.color = "var(--text-main)";
+            modalMessage.textContent = "All 10 slots filled successfully.";
+            modalOverlay.classList.add('visible');
+            startConfetti();
+        }
+
+        function triggerLoss(val) {
+            gameOver = true;
+            modalTitle.textContent = "Game Over";
+            modalTitle.style.color = "var(--error)";
+            modalMessage.textContent = `${val} cannot be placed there.`;
+            modalOverlay.classList.add('visible');
+        }
+
+        // --- DEV MODE HELPERS ---
+        function activateDevMode(visualScore) {
+            devIndicator.classList.add('visible');
+            currentScore = visualScore;
+            updatePressure(visualScore);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key.length === 1 && /[a-zA-Z0-9]/.test(e.key)) {
+                cheatBuffer += e.key.toLowerCase();
+                if (cheatBuffer.length > 20) cheatBuffer = cheatBuffer.substring(cheatBuffer.length - 20);
+
+                if (cheatBuffer.endsWith(CHEAT_CODE)) {
+                    // Fill remaining slots
+                    slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });
+                    
+                    // Force state to 10 so it's consistent
+                    activateDevMode(10); 
+                    
+                    triggerWin();
+                    cheatBuffer = "";
+                }
+                else if (cheatBuffer.endsWith("fill5")) { activateDevMode(5); }
+                else if (cheatBuffer.endsWith("fill6")) { activateDevMode(6); }
+                else if (cheatBuffer.endsWith("fill7")) { activateDevMode(7); }
+                else if (cheatBuffer.endsWith("fill8")) { activateDevMode(8); }
+                else if (cheatBuffer.endsWith("fill9")) { activateDevMode(9); }
+            }
+        });
+
+        rollBtn.addEventListener('click', rollNumber);
+        resetBtn.addEventListener('click', () => location.reload());
+
+        function startConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const particles = [];
+            const colors = ['#ffffff', '#a1a1aa']; 
+
+            function Particle() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.size = Math.random() * 5 + 2;
+                this.speedY = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.rotation = Math.random() * 360;
+            }
+
+            Particle.prototype.update = function() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                if (this.y > canvas.height) this.y = -20;
+            }
+
+            Particle.prototype.draw = function() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(0, 0, this.size, this.size);
+                ctx.restore();
+            }
+
+            for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                if(gameOver) requestAnimationFrame(animate);
+            }
+            animate();
+            
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+        
+        init();
+    </script>
+</body>
+</html>
