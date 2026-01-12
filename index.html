@@ -413,7 +413,7 @@
         </div>
     </div>
     
-    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.18</div>
+    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.20</div>
 
     <div id="mode-modal" class="overlay">
         <div class="modal">
@@ -483,7 +483,7 @@
         let confettiActive = false;
         let forcedRolls = []; 
         let isRolling = false;
-        let isDevMode = false; // Controls whether smart-safety is allowed
+        let isDevMode = false; 
 
         const mainMenu = document.getElementById('main-menu');
         const gameInterface = document.getElementById('game-interface');
@@ -844,6 +844,9 @@
             gameOver = true;
             document.body.classList.add('state-dead');
             document.body.classList.remove('pressure-5', 'pressure-6', 'pressure-7', 'pressure-8', 'pressure-9');
+            
+            // Remove shake animations so it stops moving
+            rollDisplay.classList.remove('shake-lvl-1', 'shake-lvl-2', 'shake-lvl-3');
         }
 
         function triggerWin() {
