@@ -221,13 +221,19 @@
 
         /* --- SUCCESS STATE --- */
         .slot.win-success {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: var(--success);
-            color: var(--success);
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.2) !important;
+            border-color: var(--success) !important;
+            color: var(--success) !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3) !important;
         }
-        .slot.win-success .slot-idx { color: var(--success); opacity: 0.7; }
-        .slot.win-success .slot-val { color: var(--success); }
+        
+        body.state-success {
+            background-color: #022c22 !important; /* Deep Green */
+        }
+        
+        body.state-success .slot:not(.win-success) {
+            opacity: 0.5;
+        }
 
         /* --- MODALS --- */
         .overlay {
@@ -258,23 +264,7 @@
         .close-btn { background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); margin-top: 10px; width: 100%; }
         .close-btn:hover { border-color: var(--text-main); color: var(--text-main); }
 
-        /* Game Modes List */
-        .mode-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        .mode-btn {
-            background: var(--bg-slot);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-main);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: left;
-            transition: all 0.2s;
-        }
-        .mode-btn:hover { border-color: var(--accent-primary); transform: translateX(5px); }
-        .mode-btn strong { display: block; font-size: 1rem; margin-bottom: 4px; }
-        .mode-btn span { font-size: 0.8rem; color: var(--text-muted); }
-
         /* --- DEAD STATE (Visual Failure) --- */
-        /* Override body colors forcefully when dead */
         body.state-dead {
             background-color: #09090b !important; /* Force return to default zinc */
             color: var(--text-muted) !important;
@@ -288,7 +278,6 @@
             pointer-events: none;
         }
 
-        /* Revert filled slots to look dead/neutral */
         body.state-dead .slot.filled {
             background-color: var(--bg-slot);
             border-color: var(--border-subtle);
@@ -306,20 +295,26 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
         }
 
-        /* --- CONFETTI Z-INDEX FIX --- */
+        /* --- CONFETTI --- */
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; transition: opacity 1s ease; }
         .dev-indicator { position: fixed; top: 20px; right: 20px; opacity: 0; color: #fff; font-family: monospace; }
         .dev-indicator.visible { opacity: 1; }
 
-        /* --- PRESSURE STYLES --- */
+        /* --- ANIMATIONS (Shakes & Pressure) --- */
         body.pressure-5 { --bg-body: #1c1917; --bg-card: #292524; }
         body.pressure-6 { --bg-body: #281205; --bg-card: #431407; }
         body.pressure-7 { --bg-body: #380808; --bg-card: #551010; --border-active: #b91c1c; }
         body.pressure-8 { --bg-body: #450a0a; --bg-card: #601414; --accent-primary: #fca5a5; --accent-bg: #450a0a; }
         body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda4af; --accent-bg: #881337; }
         
-        @keyframes shake-light { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(1px, 1px); } 75% { transform: translate(-1px, -1px); } }
-        .shake-lvl-1 { animation: shake-light 0.5s infinite; }
+        /* Shake Levels */
+        @keyframes shake-1 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(1px, 1px); } 75% { transform: translate(-1px, -1px); } }
+        @keyframes shake-2 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, 0); } 75% { transform: translate(2px, -2px); } }
+        @keyframes shake-3 { 0%, 100% { transform: translate(0, 0); } 10% { transform: translate(-3px, -3px); } 30% { transform: translate(3px, 3px); } 50% { transform: translate(-3px, 3px); } 70% { transform: translate(3px, -3px); } 90% { transform: translate(-1px, 1px); } }
+
+        .shake-lvl-1 { animation: shake-1 0.5s infinite; } /* Slow/Light */
+        .shake-lvl-2 { animation: shake-2 0.3s infinite; } /* Medium */
+        .shake-lvl-3 { animation: shake-3 0.15s infinite; color: var(--error) !important; } /* Hard/Violent */
 
         @media (max-width: 500px) {
             .slots-grid { grid-template-columns: repeat(2, 1fr); }
@@ -332,12 +327,9 @@
     <canvas id="confetti-canvas"></canvas>
     <div id="dev-indicator" class="dev-indicator">DEVMODE</div>
 
-    <!-- MAIN MENU LINK (Moved to Top Right) -->
     <a id="top-menu-link" class="top-menu-link" onclick="returnToMenu()">← Menu</a>
 
     <div class="game-wrapper">
-        
-        <!-- MAIN MENU -->
         <div id="main-menu">
             <h1 class="menu-title">NumLock</h1>
             <p class="menu-subtitle">Strategic Sorting</p>
@@ -348,7 +340,6 @@
             </div>
         </div>
 
-        <!-- GAME INTERFACE -->
         <div id="game-interface">
             <header>
                 <h1>NumLock</h1>
@@ -369,15 +360,13 @@
             </main>
 
             <footer>
-                <!-- Replaced Return to Menu with Reset -->
                 <button id="reset-btn" class="secondary-btn">Reset Board</button>
             </footer>
         </div>
     </div>
     
-    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.8</div>
+    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.11</div>
 
-    <!-- MODE SELECTION MODAL -->
     <div id="mode-modal" class="overlay">
         <div class="modal">
             <h2>Select Difficulty</h2>
@@ -403,7 +392,6 @@
         </div>
     </div>
 
-    <!-- ABOUT MODAL -->
     <div id="about-modal" class="overlay">
         <div class="modal">
             <h2>About NumLock</h2>
@@ -418,7 +406,6 @@
         </div>
     </div>
 
-    <!-- WIN MODAL (No Game Over Modal for Loss anymore) -->
     <div id="game-end-modal" class="overlay">
         <div class="modal win-modal">
             <h2 id="end-title">Completed!</h2>
@@ -429,20 +416,14 @@
     </div>
 
     <script>
-        /* =========================================
-           FILE: script.js
-           ========================================= */
-
         const CHEAT_CODE = "wingame";
 
-        // Global Game Configuration
         let config = {
             totalSlots: 10,
             maxNumber: 1000,
             initialSkips: 0
         };
 
-        // Game State
         let slots = [];
         let currentRoll = null;
         let gameOver = false;
@@ -453,8 +434,8 @@
         let remainingSkips = 0;
         let totalSkippedDuplicates = 0;
         let confettiActive = false;
+        let forcedRolls = []; // Queue for cheat rolls
 
-        // DOM Elements
         const mainMenu = document.getElementById('main-menu');
         const gameInterface = document.getElementById('game-interface');
         const slotsGrid = document.getElementById('slots-grid');
@@ -470,8 +451,6 @@
         const resetBtn = document.getElementById('reset-btn');
         const topMenuLink = document.getElementById('top-menu-link');
 
-        // --- MENU NAVIGATION ---
-        
         function openModeSelect() {
             document.getElementById('mode-modal').classList.add('visible');
         }
@@ -492,10 +471,7 @@
             document.body.className = '';
         }
 
-        // --- GAME INITIALIZATION ---
-
         function startGame(mode) {
-            // Set Config based on Mode
             switch(mode) {
                 case 'easy':
                     config = { totalSlots: 10, maxNumber: 1000, initialSkips: 3 };
@@ -514,13 +490,10 @@
                     gameModeDisplay.textContent = "Mode: Extreme (1-100)";
                     break;
             }
-
-            // Switch Views
             closeAllModals();
             mainMenu.style.display = 'none';
             gameInterface.style.display = 'block';
             topMenuLink.style.display = 'block';
-
             init();
         }
 
@@ -534,40 +507,35 @@
                 clearInterval(shuffleInterval);
                 shuffleInterval = null;
             }
-            
-            // Cleanup UI
             slotsGrid.innerHTML = '';
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             canvas.style.opacity = 1;
 
-            // Reset Logic
             slots = Array(config.totalSlots).fill(null);
             currentRoll = null;
             gameOver = false;
             cheatBuffer = "";
             currentScore = 0;
             remainingSkips = config.initialSkips;
+            forcedRolls = []; // Clear forced rolls
 
-            // Reset Styles
-            document.body.className = ''; // Remove dead state or pressure classes
+            document.body.className = '';
             devIndicator.classList.remove('visible');
             rollDisplay.className = 'number-display'; 
             document.querySelector('.roll-card').classList.remove('rolling'); 
             rollDisplay.textContent = "?";
             rollBtn.disabled = false;
 
-            // Setup Skips
             if (remainingSkips > 0) {
                 skipBtn.style.display = 'inline-block';
-                skipBtn.disabled = true; // Disabled until roll
+                skipBtn.disabled = true;
                 skipCountSpan.textContent = remainingSkips;
             } else {
                 skipBtn.style.display = 'none';
             }
 
-            // Setup Grid
             slotsGrid.className = 'slots-grid';
             if (config.totalSlots > 10) slotsGrid.classList.add('large-grid');
 
@@ -607,8 +575,6 @@
             osc.stop(now + 0.04);
         }
 
-        // --- CORE LOGIC ---
-
         function rollNumber() {
             if (gameOver || currentRoll !== null) return;
             initAudio();
@@ -619,38 +585,35 @@
             
             let iterations = 0;
             
-            // --- UNIQUE ROLL SYSTEM WITH SMART SAFETY ---
             if (slots.every(s => s !== null)) return;
 
             let finalResult;
-            let safetyCounter = 0;
-
-            // Generate a valid number
-            while (true) {
-                safetyCounter++;
-                const salt = Date.now() % 100; 
-                const rawRand = Math.random() * config.maxNumber;
-                finalResult = Math.floor(rawRand) + 1;
-                
-                // 1. Must be unique
-                if (slots.includes(finalResult)) {
-                    totalSkippedDuplicates++;
-                    if (safetyCounter > 5000) break; // Emergency break
-                    continue; // Reroll
+            
+            // CHECK FOR CHEAT QUEUE FIRST
+            if (forcedRolls.length > 0) {
+                finalResult = forcedRolls.shift();
+            } else {
+                // NORMAL LOGIC
+                let safetyCounter = 0;
+                while (true) {
+                    safetyCounter++;
+                    const rawRand = Math.random() * config.maxNumber;
+                    finalResult = Math.floor(rawRand) + 1;
+                    
+                    if (slots.includes(finalResult)) {
+                        totalSkippedDuplicates++;
+                        if (safetyCounter > 5000) break;
+                        continue;
+                    }
+                    if (!canPlaceAnywhere(finalResult) && safetyCounter < 50) {
+                        continue;
+                    }
+                    break;
                 }
-
-                // 2. Smart Safety Check:
-                if (!canPlaceAnywhere(finalResult) && safetyCounter < 50) {
-                    continue;
-                }
-
-                break;
             }
-            // --------------------------
 
             shuffleInterval = setInterval(() => {
                 playTick();
-                // Visual shuffle
                 rollDisplay.textContent = Math.floor(Math.random() * config.maxNumber) + 1;
                 iterations++;
 
@@ -661,6 +624,12 @@
                     rollDisplay.textContent = currentRoll;
                     document.querySelector('.roll-card').classList.remove('rolling');
                     
+                    // APPLY CHEAT SHAKES
+                    rollDisplay.className = 'number-display'; // Reset
+                    if (currentRoll === 7) rollDisplay.classList.add('shake-lvl-1');
+                    else if (currentRoll === 8) rollDisplay.classList.add('shake-lvl-2');
+                    else if (currentRoll === 9) rollDisplay.classList.add('shake-lvl-3');
+
                     if (remainingSkips > 0) skipBtn.disabled = false;
 
                     if (!canPlaceAnywhere(currentRoll)) {
@@ -678,15 +647,10 @@
 
         function useSkip() {
             if (remainingSkips <= 0 || currentRoll === null) return;
-            
             remainingSkips--;
             skipCountSpan.textContent = remainingSkips;
-            
-            // Auto-reroll feature
             currentRoll = null;
             disableSlots();
-            
-            // Immediately roll new number
             rollNumber(); 
         }
 
@@ -717,6 +681,7 @@
                 } else {
                     currentRoll = null;
                     rollDisplay.textContent = "?";
+                    rollDisplay.className = 'number-display'; // Reset shake
                     rollBtn.disabled = false;
                     if(remainingSkips > 0) skipBtn.disabled = true;
                     disableSlots();
@@ -748,9 +713,6 @@
             if (ratio > 0.7) document.body.classList.add('pressure-7');
             if (ratio > 0.8) document.body.classList.add('pressure-8');
             if (ratio > 0.9) document.body.classList.add('pressure-9');
-            
-            if (ratio > 0.7) rollDisplay.classList.add('shake-lvl-1');
-            else rollDisplay.classList.remove('shake-lvl-1');
         }
 
         function isValidPlacement(index, val) {
@@ -793,25 +755,30 @@
         function triggerDeadState() {
             gameOver = true;
             document.body.classList.add('state-dead');
-            
-            // Remove pressure classes to revert to default color
             document.body.classList.remove('pressure-5', 'pressure-6', 'pressure-7', 'pressure-8', 'pressure-9');
         }
 
         function triggerWin() {
             gameOver = true;
             
-            // Highlight slots green before showing modal
+            // 1. Highlight Slots Green
             const slotElements = document.querySelectorAll('.slot');
             slotElements.forEach(el => el.classList.add('win-success'));
 
-            endTitle.textContent = "Completed!";
-            endMessage.textContent = `All ${config.totalSlots} slots filled successfully.`;
-            endModal.classList.add('visible');
-            startConfetti();
+            // 2. Turn Background Green
+            document.body.className = ''; // Remove pressure classes
+            document.body.classList.add('state-success');
+
+            // 3. Wait 2 seconds before showing Modal
+            setTimeout(() => {
+                endTitle.textContent = "Completed!";
+                endMessage.textContent = `All ${config.totalSlots} slots filled successfully.`;
+                endModal.classList.add('visible');
+                startConfetti();
+            }, 2000);
         }
 
-        // --- DEV TOOLS (Cheat Codes) ---
+        // --- DEV TOOLS ---
         function fillSlotsSequentially(count) {
             if (count > config.totalSlots) count = config.totalSlots;
             for(let i = 0; i < count; i++) {
@@ -822,32 +789,15 @@
             devIndicator.classList.add('visible');
         }
 
-        function fillCheatMode5() {
-            // "Fill the next 5 slots with numbers... range 6-10"
-            // To satisfy range 6-10 and fill 5 slots: 6, 7, 8, 9, 10
-            const values = [6, 7, 8, 9, 10];
-            let valuesIdx = 0;
-
-            for(let i = 0; i < config.totalSlots; i++) {
-                if(slots[i] === null && valuesIdx < values.length) {
-                    const val = values[valuesIdx];
-                    placeNumber(i, val);
-                    
-                    // "Shaky as it approaches 9" -> Manually add shake to 9 and 10
-                    if (val >= 9) {
-                        const slotEl = slotsGrid.children[i];
-                        slotEl.classList.add('shake-lvl-1');
-                    }
-                    
-                    valuesIdx++;
-                }
+        function setupCheatFill5() {
+            // 1. Fill slots 0-4 with 1-5 immediately
+            for(let i = 0; i < 5; i++) {
+                if(slots[i] === null) placeNumber(i, i+1);
             }
-            devIndicator.classList.add('visible');
+            // 2. Force next 5 rolls to be 6, 7, 8, 9, 10
+            forcedRolls = [6, 7, 8, 9, 10];
             
-            // Check win immediately if full
-            if (slots.every(s => s !== null)) {
-                triggerWin();
-            }
+            devIndicator.classList.add('visible');
         }
 
         window.addEventListener('keydown', (e) => {
@@ -855,7 +805,6 @@
                 cheatBuffer += e.key.toLowerCase();
                 if (cheatBuffer.length > 20) cheatBuffer = cheatBuffer.substring(cheatBuffer.length - 20);
 
-                // Win Game Cheat
                 if (cheatBuffer.endsWith(CHEAT_CODE)) {
                     if (mainMenu.style.display !== 'none') startGame('medium');
                     slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });
@@ -863,8 +812,7 @@
                     triggerWin();
                     cheatBuffer = "";
                 }
-                // Sequential Fill Cheats
-                else if (cheatBuffer.endsWith("fill5")) { fillCheatMode5(); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill5")) { setupCheatFill5(); cheatBuffer = ""; }
                 else if (cheatBuffer.endsWith("fill6")) { fillSlotsSequentially(6); cheatBuffer = ""; }
                 else if (cheatBuffer.endsWith("fill7")) { fillSlotsSequentially(7); cheatBuffer = ""; }
                 else if (cheatBuffer.endsWith("fill8")) { fillSlotsSequentially(8); cheatBuffer = ""; }
@@ -875,7 +823,7 @@
         rollBtn.addEventListener('click', rollNumber);
         resetBtn.addEventListener('click', resetGame); 
 
-        // --- CONFETTI (Visuals) ---
+        // --- CONFETTI ---
         function startConfetti() {
             confettiActive = true;
             const canvas = document.getElementById('confetti-canvas');
