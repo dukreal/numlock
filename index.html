@@ -219,6 +219,16 @@
         .slot.active-target:hover { border-color: var(--accent-primary); background: var(--bg-card); }
         .slot.filled { background: var(--bg-card); border-color: var(--border-active); }
 
+        /* --- SUCCESS STATE --- */
+        .slot.win-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+        .slot.win-success .slot-idx { color: var(--success); opacity: 0.7; }
+        .slot.win-success .slot-val { color: var(--success); }
+
         /* --- MODALS --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -365,7 +375,7 @@
         </div>
     </div>
     
-    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.4</div>
+    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.8</div>
 
     <!-- MODE SELECTION MODAL -->
     <div id="mode-modal" class="overlay">
@@ -630,15 +640,10 @@
                 }
 
                 // 2. Smart Safety Check:
-                // If the number causes immediate death, BUT a playable number exists in the universe, try to find it.
-                // We give the RNG 50 attempts to find a number that returns true for 'canPlaceAnywhere'.
-                // If it fails after 50 tries, we assume the player is truly stuck or luck is just bad, and accept the fatal roll.
                 if (!canPlaceAnywhere(finalResult) && safetyCounter < 50) {
-                    // Try to reroll for a better number
                     continue;
                 }
 
-                // If we got here, it's either a playable number OR we exhausted our smart retries.
                 break;
             }
             // --------------------------
@@ -662,7 +667,6 @@
                         if (remainingSkips > 0) {
                             shakeUI(skipBtn);
                         } else {
-                            // ENTER DEAD STATE
                             triggerDeadState();
                         }
                     } else {
@@ -734,7 +738,6 @@
         }
 
         function updatePressure(score) {
-            // Only update pressure if not already in dead state or game over
             if (gameOver) return;
 
             document.body.className = '';
@@ -797,6 +800,11 @@
 
         function triggerWin() {
             gameOver = true;
+            
+            // Highlight slots green before showing modal
+            const slotElements = document.querySelectorAll('.slot');
+            slotElements.forEach(el => el.classList.add('win-success'));
+
             endTitle.textContent = "Completed!";
             endMessage.textContent = `All ${config.totalSlots} slots filled successfully.`;
             endModal.classList.add('visible');
@@ -805,16 +813,41 @@
 
         // --- DEV TOOLS (Cheat Codes) ---
         function fillSlotsSequentially(count) {
-            // Fills slots 0 to count-1 with numbers 1 to count
             if (count > config.totalSlots) count = config.totalSlots;
-            
-            // Reset grid partially if needed, but usually this is used on fresh start
             for(let i = 0; i < count; i++) {
                 if(slots[i] === null) {
                     placeNumber(i, i + 1);
                 }
             }
             devIndicator.classList.add('visible');
+        }
+
+        function fillCheatMode5() {
+            // "Fill the next 5 slots with numbers... range 6-10"
+            // To satisfy range 6-10 and fill 5 slots: 6, 7, 8, 9, 10
+            const values = [6, 7, 8, 9, 10];
+            let valuesIdx = 0;
+
+            for(let i = 0; i < config.totalSlots; i++) {
+                if(slots[i] === null && valuesIdx < values.length) {
+                    const val = values[valuesIdx];
+                    placeNumber(i, val);
+                    
+                    // "Shaky as it approaches 9" -> Manually add shake to 9 and 10
+                    if (val >= 9) {
+                        const slotEl = slotsGrid.children[i];
+                        slotEl.classList.add('shake-lvl-1');
+                    }
+                    
+                    valuesIdx++;
+                }
+            }
+            devIndicator.classList.add('visible');
+            
+            // Check win immediately if full
+            if (slots.every(s => s !== null)) {
+                triggerWin();
+            }
         }
 
         window.addEventListener('keydown', (e) => {
@@ -824,18 +857,14 @@
 
                 // Win Game Cheat
                 if (cheatBuffer.endsWith(CHEAT_CODE)) {
-                    // If in menu, start a dummy game first
-                    if (mainMenu.style.display !== 'none') {
-                        startGame('medium');
-                    }
-                    // Visual fill if slots exist
+                    if (mainMenu.style.display !== 'none') startGame('medium');
                     slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });
                     devIndicator.classList.add('visible');
                     triggerWin();
                     cheatBuffer = "";
                 }
                 // Sequential Fill Cheats
-                else if (cheatBuffer.endsWith("fill5")) { fillSlotsSequentially(5); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill5")) { fillCheatMode5(); cheatBuffer = ""; }
                 else if (cheatBuffer.endsWith("fill6")) { fillSlotsSequentially(6); cheatBuffer = ""; }
                 else if (cheatBuffer.endsWith("fill7")) { fillSlotsSequentially(7); cheatBuffer = ""; }
                 else if (cheatBuffer.endsWith("fill8")) { fillSlotsSequentially(8); cheatBuffer = ""; }
@@ -854,7 +883,6 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             
-            // Reset opacity and ensure visible
             canvas.style.transition = 'none';
             canvas.style.opacity = 1;
 
@@ -874,7 +902,6 @@
             Particle.prototype.update = function() {
                 this.y += this.speedY;
                 this.x += this.speedX;
-                // Loop vertically
                 if (this.y > canvas.height) this.y = -20;
             }
 
@@ -890,20 +917,16 @@
             for (let i = 0; i < 80; i++) particles.push(new Particle());
 
             function animate() {
-                if (!confettiActive) return; // Stop loop if flag is false
+                if (!confettiActive) return; 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 particles.forEach(p => { p.update(); p.draw(); });
                 requestAnimationFrame(animate);
             }
             animate();
 
-            // Smooth Fade Out Logic
-            // Run for 3 seconds, then start fading out
             setTimeout(() => {
                 canvas.style.transition = "opacity 2.5s ease";
                 canvas.style.opacity = 0;
-                
-                // Stop the loop after fade is complete to save resources
                 setTimeout(() => {
                     confettiActive = false;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
