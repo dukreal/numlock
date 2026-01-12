@@ -83,6 +83,7 @@
             align-items: center;
             justify-content: center;
             height: 100%;
+            width: 100%;
             animation: fadeIn 0.5s ease;
         }
 
@@ -365,7 +366,7 @@
         </div>
     </div>
     
-    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.11</div>
+    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.14</div>
 
     <div id="mode-modal" class="overlay">
         <div class="modal">
@@ -465,10 +466,11 @@
 
         function returnToMenu() {
             closeAllModals();
+            init(); // Reset state to clear any cheat artifacts/success states
             gameInterface.style.display = 'none';
             topMenuLink.style.display = 'none';
             mainMenu.style.display = 'flex';
-            document.body.className = '';
+            document.body.className = ''; // Completely wipe class list to remove 'state-success' etc
         }
 
         function startGame(mode) {
@@ -624,7 +626,7 @@
                     rollDisplay.textContent = currentRoll;
                     document.querySelector('.roll-card').classList.remove('rolling');
                     
-                    // APPLY CHEAT SHAKES
+                    // APPLY CHEAT SHAKES (Apply to any roll, forced or not)
                     rollDisplay.className = 'number-display'; // Reset
                     if (currentRoll === 7) rollDisplay.classList.add('shake-lvl-1');
                     else if (currentRoll === 8) rollDisplay.classList.add('shake-lvl-2');
@@ -779,25 +781,25 @@
         }
 
         // --- DEV TOOLS ---
-        function fillSlotsSequentially(count) {
-            if (count > config.totalSlots) count = config.totalSlots;
-            for(let i = 0; i < count; i++) {
-                if(slots[i] === null) {
-                    placeNumber(i, i + 1);
-                }
-            }
-            devIndicator.classList.add('visible');
-        }
-
-        function setupCheatFill5() {
-            // 1. Fill slots 0-4 with 1-5 immediately
-            for(let i = 0; i < 5; i++) {
+        function setupCheatFill(n) {
+            // 1. Fill slots 0 to n-1 with 1 to n immediately
+            for(let i = 0; i < n; i++) {
                 if(slots[i] === null) placeNumber(i, i+1);
             }
-            // 2. Force next 5 rolls to be 6, 7, 8, 9, 10
-            forcedRolls = [6, 7, 8, 9, 10];
+            
+            // 2. Force next rolls to finish the game up to 10
+            // Example: fill6 fills 1-6. Next rolls should be 7, 8, 9, 10
+            forcedRolls = [];
+            for(let val = n + 1; val <= 10; val++) {
+                forcedRolls.push(val);
+            }
             
             devIndicator.classList.add('visible');
+            
+            // Just in case we filled to 10 immediately
+            if (slots.every(s => s !== null)) {
+                triggerWin();
+            }
         }
 
         window.addEventListener('keydown', (e) => {
@@ -812,11 +814,11 @@
                     triggerWin();
                     cheatBuffer = "";
                 }
-                else if (cheatBuffer.endsWith("fill5")) { setupCheatFill5(); cheatBuffer = ""; }
-                else if (cheatBuffer.endsWith("fill6")) { fillSlotsSequentially(6); cheatBuffer = ""; }
-                else if (cheatBuffer.endsWith("fill7")) { fillSlotsSequentially(7); cheatBuffer = ""; }
-                else if (cheatBuffer.endsWith("fill8")) { fillSlotsSequentially(8); cheatBuffer = ""; }
-                else if (cheatBuffer.endsWith("fill9")) { fillSlotsSequentially(9); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill5")) { setupCheatFill(5); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill6")) { setupCheatFill(6); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill7")) { setupCheatFill(7); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill8")) { setupCheatFill(8); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill9")) { setupCheatFill(9); cheatBuffer = ""; }
             }
         });
 
