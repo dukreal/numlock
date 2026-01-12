@@ -413,7 +413,7 @@
         </div>
     </div>
     
-    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.4.1</div>
+    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.18</div>
 
     <div id="mode-modal" class="overlay">
         <div class="modal">
@@ -483,6 +483,7 @@
         let confettiActive = false;
         let forcedRolls = []; 
         let isRolling = false;
+        let isDevMode = false; // Controls whether smart-safety is allowed
 
         const mainMenu = document.getElementById('main-menu');
         const gameInterface = document.getElementById('game-interface');
@@ -553,6 +554,7 @@
 
         function init() {
             isRolling = false;
+            isDevMode = false; // Reset dev mode on fresh start
             slotsGrid.innerHTML = '';
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
@@ -665,9 +667,12 @@
                         if (safetyCounter > 5000) break;
                         continue;
                     }
-                    if (!canPlaceAnywhere(finalResult) && safetyCounter < 50) {
+                    
+                    // SMART SAFETY ONLY IN DEV MODE
+                    if (isDevMode && !canPlaceAnywhere(finalResult) && safetyCounter < 50) {
                         continue;
                     }
+                    
                     break;
                 }
             }
@@ -699,13 +704,15 @@
                     document.querySelector('.roll-card').classList.remove('rolling');
                     isRolling = false;
                     
-                    // -- Logic for Color Reset After Reveal --
-                    if (canPlaceAnywhere(currentRoll)) {
-                        // SUCCESS: Turn WHITE (Remove Red)
-                        rollDisplay.classList.remove('crit-text');
-                        // Optional: Keep shake or remove it? Usually keep until action.
-                    } else {
-                        // FAIL: Stay RED (crit-text remains)
+                    // -- Logic for Color Reset After Reveal (Last Turn) --
+                    // If it was the last turn (Red/Shake), handle visual result
+                    if (rollDisplay.classList.contains('crit-text')) {
+                        if (canPlaceAnywhere(currentRoll)) {
+                            // SUCCESS: Turn WHITE (Remove Red)
+                            rollDisplay.classList.remove('crit-text');
+                        } else {
+                            // FAIL: Stay RED (crit-text remains)
+                        }
                     }
 
                     if (remainingSkips > 0) skipBtn.disabled = false;
@@ -861,6 +868,7 @@
 
         // --- DEV TOOLS ---
         function setupCheatFill(n) {
+            isDevMode = true; // Activate Dev Mode features
             // 1. Fill slots 0 to n-1 with 1 to n immediately
             for(let i = 0; i < n; i++) {
                 if(slots[i] === null) placeNumber(i, i+1);
@@ -886,6 +894,7 @@
                 if (cheatBuffer.length > 20) cheatBuffer = cheatBuffer.substring(cheatBuffer.length - 20);
 
                 if (cheatBuffer.endsWith(CHEAT_CODE)) {
+                    isDevMode = true; // Win cheat also activates smart-safety
                     if (mainMenu.style.display !== 'none') startGame('medium');
                     slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });
                     devIndicator.classList.add('visible');
