@@ -264,13 +264,27 @@
         .mode-btn span { font-size: 0.8rem; color: var(--text-muted); }
 
         /* --- DEAD STATE (Visual Failure) --- */
+        /* Override body colors forcefully when dead */
+        body.state-dead {
+            background-color: #09090b !important; /* Force return to default zinc */
+            color: var(--text-muted) !important;
+        }
+
         body.state-dead .roll-stage,
         body.state-dead .slots-grid,
         body.state-dead header {
-            opacity: 0.2;
-            filter: grayscale(1) blur(1px);
+            opacity: 0.4;
+            filter: grayscale(1);
             pointer-events: none;
         }
+
+        /* Revert filled slots to look dead/neutral */
+        body.state-dead .slot.filled {
+            background-color: var(--bg-slot);
+            border-color: var(--border-subtle);
+            color: var(--text-muted);
+        }
+
         body.state-dead #reset-btn {
             border-color: var(--text-main);
             color: var(--text-main);
@@ -283,7 +297,7 @@
         }
 
         /* --- CONFETTI Z-INDEX FIX --- */
-        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; transition: opacity 1s ease; }
         .dev-indicator { position: fixed; top: 20px; right: 20px; opacity: 0; color: #fff; font-family: monospace; }
         .dev-indicator.visible { opacity: 1; }
 
@@ -351,7 +365,7 @@
         </div>
     </div>
     
-    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.0</div>
+    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.4</div>
 
     <!-- MODE SELECTION MODAL -->
     <div id="mode-modal" class="overlay">
@@ -428,6 +442,7 @@
         let shuffleInterval = null; 
         let remainingSkips = 0;
         let totalSkippedDuplicates = 0;
+        let confettiActive = false;
 
         // DOM Elements
         const mainMenu = document.getElementById('main-menu');
@@ -515,6 +530,7 @@
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.style.opacity = 1;
 
             // Reset Logic
             slots = Array(config.totalSlots).fill(null);
@@ -593,33 +609,43 @@
             
             let iterations = 0;
             
-            // --- UNIQUE ROLL SYSTEM ---
+            // --- UNIQUE ROLL SYSTEM WITH SMART SAFETY ---
             if (slots.every(s => s !== null)) return;
 
             let finalResult;
             let safetyCounter = 0;
 
-            // Force unique number & Improve randomness
+            // Generate a valid number
             while (true) {
-                // Incorporate date time to ensure salt changes on rapid clicks
+                safetyCounter++;
                 const salt = Date.now() % 100; 
                 const rawRand = Math.random() * config.maxNumber;
-                // Add minor variation to break potential engine caching/patterns
                 finalResult = Math.floor(rawRand) + 1;
                 
+                // 1. Must be unique
                 if (slots.includes(finalResult)) {
                     totalSkippedDuplicates++;
-                    safetyCounter++;
-                    if (safetyCounter > 5000) break; 
-                } else {
-                    break;
+                    if (safetyCounter > 5000) break; // Emergency break
+                    continue; // Reroll
                 }
+
+                // 2. Smart Safety Check:
+                // If the number causes immediate death, BUT a playable number exists in the universe, try to find it.
+                // We give the RNG 50 attempts to find a number that returns true for 'canPlaceAnywhere'.
+                // If it fails after 50 tries, we assume the player is truly stuck or luck is just bad, and accept the fatal roll.
+                if (!canPlaceAnywhere(finalResult) && safetyCounter < 50) {
+                    // Try to reroll for a better number
+                    continue;
+                }
+
+                // If we got here, it's either a playable number OR we exhausted our smart retries.
+                break;
             }
             // --------------------------
 
             shuffleInterval = setInterval(() => {
                 playTick();
-                // Visual shuffle: Show numbers in full range to avoid "perceived" sticking
+                // Visual shuffle
                 rollDisplay.textContent = Math.floor(Math.random() * config.maxNumber) + 1;
                 iterations++;
 
@@ -636,7 +662,7 @@
                         if (remainingSkips > 0) {
                             shakeUI(skipBtn);
                         } else {
-                            // ENTER DEAD STATE instead of modal
+                            // ENTER DEAD STATE
                             triggerDeadState();
                         }
                     } else {
@@ -764,8 +790,9 @@
         function triggerDeadState() {
             gameOver = true;
             document.body.classList.add('state-dead');
-            // The footer button is now 'Reset Board', which remains clickable
-            // due to CSS pointer-events on body.state-dead #reset-btn
+            
+            // Remove pressure classes to revert to default color
+            document.body.classList.remove('pressure-5', 'pressure-6', 'pressure-7', 'pressure-8', 'pressure-9');
         }
 
         function triggerWin() {
@@ -776,32 +803,63 @@
             startConfetti();
         }
 
-        // --- DEV TOOLS ---
+        // --- DEV TOOLS (Cheat Codes) ---
+        function fillSlotsSequentially(count) {
+            // Fills slots 0 to count-1 with numbers 1 to count
+            if (count > config.totalSlots) count = config.totalSlots;
+            
+            // Reset grid partially if needed, but usually this is used on fresh start
+            for(let i = 0; i < count; i++) {
+                if(slots[i] === null) {
+                    placeNumber(i, i + 1);
+                }
+            }
+            devIndicator.classList.add('visible');
+        }
+
         window.addEventListener('keydown', (e) => {
             if (e.key.length === 1 && /[a-zA-Z0-9]/.test(e.key)) {
                 cheatBuffer += e.key.toLowerCase();
                 if (cheatBuffer.length > 20) cheatBuffer = cheatBuffer.substring(cheatBuffer.length - 20);
 
+                // Win Game Cheat
                 if (cheatBuffer.endsWith(CHEAT_CODE)) {
+                    // If in menu, start a dummy game first
+                    if (mainMenu.style.display !== 'none') {
+                        startGame('medium');
+                    }
+                    // Visual fill if slots exist
                     slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });
                     devIndicator.classList.add('visible');
                     triggerWin();
                     cheatBuffer = "";
                 }
+                // Sequential Fill Cheats
+                else if (cheatBuffer.endsWith("fill5")) { fillSlotsSequentially(5); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill6")) { fillSlotsSequentially(6); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill7")) { fillSlotsSequentially(7); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill8")) { fillSlotsSequentially(8); cheatBuffer = ""; }
+                else if (cheatBuffer.endsWith("fill9")) { fillSlotsSequentially(9); cheatBuffer = ""; }
             }
         });
 
         rollBtn.addEventListener('click', rollNumber);
-        resetBtn.addEventListener('click', resetGame); // New Reset functionality
+        resetBtn.addEventListener('click', resetGame); 
 
         // --- CONFETTI (Visuals) ---
         function startConfetti() {
+            confettiActive = true;
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            
+            // Reset opacity and ensure visible
+            canvas.style.transition = 'none';
+            canvas.style.opacity = 1;
+
             const particles = [];
-            const colors = ['#ffffff', '#a1a1aa', '#fbbf24']; // Added Gold
+            const colors = ['#ffffff', '#a1a1aa', '#fbbf24']; 
 
             function Particle() {
                 this.x = Math.random() * canvas.width;
@@ -816,6 +874,7 @@
             Particle.prototype.update = function() {
                 this.y += this.speedY;
                 this.x += this.speedX;
+                // Loop vertically
                 if (this.y > canvas.height) this.y = -20;
             }
 
@@ -831,14 +890,25 @@
             for (let i = 0; i < 80; i++) particles.push(new Particle());
 
             function animate() {
+                if (!confettiActive) return; // Stop loop if flag is false
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 particles.forEach(p => { p.update(); p.draw(); });
-                // Keep animating regardless of gameOver state to ensure it doesn't freeze on win
-                if(endModal.classList.contains('visible')) {
-                    requestAnimationFrame(animate);
-                }
+                requestAnimationFrame(animate);
             }
             animate();
+
+            // Smooth Fade Out Logic
+            // Run for 3 seconds, then start fading out
+            setTimeout(() => {
+                canvas.style.transition = "opacity 2.5s ease";
+                canvas.style.opacity = 0;
+                
+                // Stop the loop after fade is complete to save resources
+                setTimeout(() => {
+                    confettiActive = false;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }, 2500);
+            }, 3000);
             
             window.addEventListener('resize', () => {
                 canvas.width = window.innerWidth;
