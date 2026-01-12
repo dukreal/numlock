@@ -147,7 +147,7 @@
             font-size: 5rem; font-weight: 300; line-height: 1; margin: 0;
             color: var(--text-main); font-variant-numeric: tabular-nums;
             letter-spacing: -2px; min-height: 80px; display: inline-block;
-            transition: color 0.2s ease;
+            transition: color 0.1s ease; /* Fast color transition */
         }
         .rolling .number-display { opacity: 0.8; }
         
@@ -313,12 +313,17 @@
             color: var(--text-muted) !important;
         }
 
-        body.state-dead .roll-stage,
+        /* Dead state dims the grid, but NOT the roll stage (so red text stays visible) */
         body.state-dead .slots-grid,
         body.state-dead header {
             opacity: 0.4;
             filter: grayscale(1);
             pointer-events: none;
+        }
+
+        /* Roll stage dims slightly but KEEPS COLOR */
+        body.state-dead .roll-stage {
+            opacity: 0.7;
         }
 
         body.state-dead .slot.filled {
@@ -408,7 +413,7 @@
         </div>
     </div>
     
-    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.16</div>
+    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.4.1</div>
 
     <div id="mode-modal" class="overlay">
         <div class="modal">
@@ -694,8 +699,14 @@
                     document.querySelector('.roll-card').classList.remove('rolling');
                     isRolling = false;
                     
-                    // Re-apply classes just in case textContent reset wiped anything (rare but safe)
-                    // (Actually we keep them on rollDisplay)
+                    // -- Logic for Color Reset After Reveal --
+                    if (canPlaceAnywhere(currentRoll)) {
+                        // SUCCESS: Turn WHITE (Remove Red)
+                        rollDisplay.classList.remove('crit-text');
+                        // Optional: Keep shake or remove it? Usually keep until action.
+                    } else {
+                        // FAIL: Stay RED (crit-text remains)
+                    }
 
                     if (remainingSkips > 0) skipBtn.disabled = false;
 
