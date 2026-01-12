@@ -29,6 +29,7 @@
             
             --success: #10b981;
             --error: #ef4444;
+            --gold: #fbbf24;
         }
 
         * {
@@ -49,33 +50,7 @@
             transition: background-color 0.8s ease, color 0.5s ease;
         }
 
-        /* --- DYNAMIC PRESSURE STATES --- */
-        body.pressure-5 { --bg-body: #1c1917; --bg-card: #292524; --border-active: #78716c; }
-        body.pressure-6 { --bg-body: #281205; --bg-card: #431407; --border-active: #a64626; }
-        body.pressure-7 { --bg-body: #380808; --bg-card: #551010; --border-active: #b91c1c; }
-        body.pressure-8 { --bg-body: #450a0a; --bg-card: #601414; --accent-primary: #fca5a5; --accent-bg: #450a0a; }
-        body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda4af; --accent-bg: #881337; }
-        
-        /* --- DOOM STATE (Impossible Roll) --- */
-        body.state-doom {
-            transition: background-color 3s ease;
-            --bg-body: #09090b; 
-            --bg-card: #18181b; 
-            --border-active: #52525b; 
-            --accent-primary: #ffffff; 
-            --accent-bg: #000000;
-        }
-
-        body.state-doom header,
-        body.state-doom .roll-stage,
-        body.state-doom .slots-grid {
-            filter: grayscale(1) brightness(0.6) contrast(1.1);
-            transition: filter 3s ease;
-        }
-
-        header, .roll-stage, .slots-grid { transition: filter 0.5s ease; }
-
-        /* --- LAYOUT --- */
+        /* --- LAYOUT WRAPPER --- */
         .game-wrapper {
             width: 100%;
             max-width: 500px;
@@ -85,30 +60,86 @@
             z-index: 10;
         }
 
-        header { margin-bottom: 30px; }
+        /* --- NAVIGATION --- */
+        .top-menu-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            z-index: 20;
+            transition: color 0.2s;
+            display: none; /* Hidden in main menu */
+        }
+        .top-menu-link:hover { color: var(--text-main); }
+
+        /* --- MAIN MENU STYLES --- */
+        #main-menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            animation: fadeIn 0.5s ease;
+        }
+
+        #game-interface {
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.5s ease;
+        }
+
+        .menu-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -2px;
+        }
+
+        .menu-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 50px;
+        }
+
+        .menu-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 250px;
+        }
+
+        .menu-btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-subtle);
+            padding: 16px;
+            font-size: 1rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .menu-btn:hover:not(:disabled) {
+            border-color: var(--text-main);
+            background: var(--border-subtle);
+            transform: translateY(-2px);
+        }
+
+        .menu-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: transparent;
+        }
+
+        /* --- GAME HEADER --- */
+        header { margin-bottom: 30px; transition: opacity 0.5s; }
         header h1 { font-weight: 700; margin: 0; font-size: 1.5rem; color: var(--text-main); }
         header p { color: var(--text-muted); margin-top: 8px; font-size: 0.9rem; }
 
-        /* --- DEV INDICATOR --- */
-        .dev-indicator {
-            position: fixed; top: 20px; right: 20px;
-            font-family: 'JetBrains Mono', monospace;
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--accent-primary);
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            letter-spacing: 1px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-            border: 1px solid rgba(255,255,255,0.2);
-            z-index: 200;
-        }
-        .dev-indicator.visible { opacity: 1; }
-
         /* --- STAGE AREA --- */
-        .roll-stage { display: flex; justify-content: center; margin-bottom: 30px; }
+        .roll-stage { display: flex; justify-content: center; margin-bottom: 30px; flex-direction: column; align-items: center; transition: opacity 0.5s; }
         .roll-card { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
         .number-display {
@@ -118,28 +149,6 @@
         }
         .rolling .number-display { opacity: 0.7; }
 
-        /* --- ANIMATIONS --- */
-        @keyframes shake-light {
-            0%, 100% { transform: translate(0, 0); }
-            25% { transform: translate(1px, 1px); }
-            75% { transform: translate(-1px, -1px); }
-        }
-        @keyframes shake-med {
-            0%, 100% { transform: translate(0, 0); }
-            20% { transform: translate(-2px, 2px); }
-            60% { transform: translate(2px, -2px); }
-        }
-        @keyframes shake-heavy {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            20% { transform: translate(3px, -3px) rotate(2deg); }
-            50% { transform: translate(-3px, 3px) rotate(-2deg); }
-            80% { transform: translate(2px, -2px) rotate(1deg); }
-        }
-
-        .shake-lvl-1 { animation: shake-light 0.5s infinite; }
-        .shake-lvl-2 { animation: shake-med 0.3s infinite; }
-        .shake-lvl-3 { animation: shake-heavy 0.15s infinite; }
-
         /* --- BUTTONS --- */
         button {
             border: none; padding: 14px 28px; border-radius: 6px;
@@ -147,114 +156,150 @@
             font-family: inherit; transition: all 0.3s ease;
         }
 
-        #roll-btn { background: var(--accent-primary); color: var(--accent-bg); margin-top: 20px; }
+        #roll-btn { background: var(--accent-primary); color: var(--accent-bg); margin-top: 20px; width: 100%; max-width: 200px; }
         #roll-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-2px); }
         #roll-btn:disabled { background: var(--border-subtle); color: var(--text-muted); cursor: not-allowed; transform: none; }
 
+        /* --- SKIP BUTTON --- */
+        #skip-container {
+            height: 40px;
+            margin-top: 10px;
+        }
+        .skip-btn {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            display: none; 
+        }
+        .skip-btn:hover:not(:disabled) {
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+        .skip-btn span {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--border-subtle);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            font-size: 0.7rem;
+        }
+
+        /* --- FOOTER / RESET --- */
+        footer { margin-top: 40px; }
         .secondary-btn {
             background: transparent; color: var(--text-muted);
-            border: 1px solid var(--border-subtle); margin-top: 40px; font-size: 0.8rem;
+            border: 1px solid var(--border-subtle); font-size: 0.8rem;
+            min-width: 140px;
         }
         .secondary-btn:hover { border-color: var(--text-main); color: var(--text-main); }
 
-        /* CRITICAL RESET STATE (Dead End) */
-        .secondary-btn.btn-critical {
-            border-color: var(--error) !important;
-            color: var(--error) !important;
-            background: rgba(239, 68, 68, 0.1);
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
-            font-weight: 700;
-            transform: scale(1.05);
-            animation: pulse-crit 2s infinite;
-        }
+        /* --- SLOTS GRID --- */
+        .slots-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 10px; transition: opacity 0.5s, filter 0.5s; }
         
-        @keyframes pulse-crit {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
+        .slots-grid.large-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .slots-grid.large-grid .slot-val { font-size: 0.9rem; }
 
-        /* --- FOOTER & VERSION --- */
-        footer {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .version-tag {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            opacity: 0.5;
-            letter-spacing: 0.5px;
-            z-index: 50;
-            cursor: default;
-        }
-
-        /* --- SLOTS --- */
-        .slots-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 10px; }
-        
         .slot {
             aspect-ratio: 1/1; background: var(--bg-slot);
             border: 1px solid var(--border-subtle); border-radius: 8px;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            cursor: default; /* Disabled by default */
-            pointer-events: none; /* Unclickable by default */
+            cursor: default; pointer-events: none;
             transition: all 0.2s; position: relative;
         }
         .slot-idx { font-size: 0.65rem; color: var(--border-active); position: absolute; top: 6px; left: 8px; }
         .slot-val { font-size: 1.1rem; font-weight: 500; color: var(--text-main); }
         
-        /* Only valid slots become clickable */
         .slot.active-target { 
-            cursor: pointer; 
-            pointer-events: auto;
-            border-color: var(--text-muted); /* Visual Highlight */
-            box-shadow: 0 0 15px -5px rgba(255, 255, 255, 0.15); /* Glow Effect */
+            cursor: pointer; pointer-events: auto;
+            border-color: var(--text-muted); box-shadow: 0 0 15px -5px rgba(255, 255, 255, 0.15); 
         }
-        
-        /* First Turn Override: No hints, but still clickable */
-        .slots-grid.first-turn .slot.active-target {
-            border-color: var(--border-subtle);
-            box-shadow: none;
-        }
-        
-        .slot.active-target:hover { 
-            border-color: var(--accent-primary); 
-            background: var(--bg-card); 
-            box-shadow: 0 0 20px -5px rgba(255, 255, 255, 0.3); /* Stronger Glow on Hover */
-        }
-        
-        .slot.filled { background: var(--bg-card); border-color: var(--border-active); cursor: default; }
+        .slots-grid.first-turn .slot.active-target { border-color: var(--border-subtle); box-shadow: none; }
+        .slot.active-target:hover { border-color: var(--accent-primary); background: var(--bg-card); }
+        .slot.filled { background: var(--bg-card); border-color: var(--border-active); }
 
-        /* --- MODAL --- */
+        /* --- MODALS --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
             display: flex; justify-content: center; align-items: center;
             z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
         }
         .overlay.visible { opacity: 1; pointer-events: all; }
 
         .modal {
-            background: var(--bg-body); padding: 40px; border-radius: 12px;
-            text-align: center; max-width: 350px; width: 90%;
+            background: var(--bg-body); padding: 30px; border-radius: 16px;
+            text-align: center; max-width: 400px; width: 90%;
             border: 1px solid var(--border-subtle);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             transform: scale(0.95); transition: transform 0.2s;
+            position: relative;
         }
         .overlay.visible .modal { transform: scale(1); }
-        .modal h2 { margin: 0 0 10px 0; font-size: 1.5rem; color: var(--text-main); }
-        .modal p { color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem; line-height: 1.5; }
-        .modal-btn { background: var(--text-main); color: var(--bg-body); width: 100%; }
-
-        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+        .modal h2 { margin: 0 0 15px 0; font-size: 1.5rem; color: var(--text-main); }
+        .modal p { color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem; line-height: 1.6; }
         
+        /* Win Modal Specifics */
+        .modal.win-modal { border-color: var(--success); box-shadow: 0 20px 60px rgba(16, 185, 129, 0.15); }
+        .modal.win-modal h2 { color: var(--success); }
+        
+        .modal-btn { background: var(--text-main); color: var(--bg-body); width: 100%; padding: 14px; margin-top: 10px; }
+        .close-btn { background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); margin-top: 10px; width: 100%; }
+        .close-btn:hover { border-color: var(--text-main); color: var(--text-main); }
+
+        /* Game Modes List */
+        .mode-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .mode-btn {
+            background: var(--bg-slot);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .mode-btn:hover { border-color: var(--accent-primary); transform: translateX(5px); }
+        .mode-btn strong { display: block; font-size: 1rem; margin-bottom: 4px; }
+        .mode-btn span { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* --- DEAD STATE (Visual Failure) --- */
+        body.state-dead .roll-stage,
+        body.state-dead .slots-grid,
+        body.state-dead header {
+            opacity: 0.2;
+            filter: grayscale(1) blur(1px);
+            pointer-events: none;
+        }
+        body.state-dead #reset-btn {
+            border-color: var(--text-main);
+            color: var(--text-main);
+            animation: pulse-reset 2s infinite;
+        }
+        @keyframes pulse-reset {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        /* --- CONFETTI Z-INDEX FIX --- */
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
+        .dev-indicator { position: fixed; top: 20px; right: 20px; opacity: 0; color: #fff; font-family: monospace; }
+        .dev-indicator.visible { opacity: 1; }
+
+        /* --- PRESSURE STYLES --- */
+        body.pressure-5 { --bg-body: #1c1917; --bg-card: #292524; }
+        body.pressure-6 { --bg-body: #281205; --bg-card: #431407; }
+        body.pressure-7 { --bg-body: #380808; --bg-card: #551010; --border-active: #b91c1c; }
+        body.pressure-8 { --bg-body: #450a0a; --bg-card: #601414; --accent-primary: #fca5a5; --accent-bg: #450a0a; }
+        body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda4af; --accent-bg: #881337; }
+        
+        @keyframes shake-light { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(1px, 1px); } 75% { transform: translate(-1px, -1px); } }
+        .shake-lvl-1 { animation: shake-light 0.5s infinite; }
+
         @media (max-width: 500px) {
             .slots-grid { grid-template-columns: repeat(2, 1fr); }
+            .slots-grid.large-grid { grid-template-columns: repeat(4, 1fr); }
             .number-display { font-size: 4rem; }
         }
     </style>
@@ -263,34 +308,99 @@
     <canvas id="confetti-canvas"></canvas>
     <div id="dev-indicator" class="dev-indicator">DEVMODE</div>
 
+    <!-- MAIN MENU LINK (Moved to Top Right) -->
+    <a id="top-menu-link" class="top-menu-link" onclick="returnToMenu()">← Menu</a>
+
     <div class="game-wrapper">
-        <header>
-            <h1>NumLock</h1>
-            <p>Sort random numbers in ascending order.</p>
-        </header>
-
-        <section class="roll-stage">
-            <div class="roll-card">
-                <div id="current-roll-display" class="number-display">?</div>
-                <button id="roll-btn">Roll Number</button>
+        
+        <!-- MAIN MENU -->
+        <div id="main-menu">
+            <h1 class="menu-title">NumLock</h1>
+            <p class="menu-subtitle">Strategic Sorting</p>
+            <div class="menu-btn-group">
+                <button class="menu-btn" onclick="openModeSelect()">Play</button>
+                <button class="menu-btn" onclick="openAbout()">About</button>
+                <button class="menu-btn" disabled>Settings</button>
             </div>
-        </section>
+        </div>
 
-        <main id="slots-grid" class="slots-grid">
+        <!-- GAME INTERFACE -->
+        <div id="game-interface">
+            <header>
+                <h1>NumLock</h1>
+                <p id="game-mode-display">Mode: Standard</p>
+            </header>
+
+            <section class="roll-stage">
+                <div class="roll-card">
+                    <div id="current-roll-display" class="number-display">?</div>
+                    <button id="roll-btn">Roll Number</button>
+                    <div id="skip-container">
+                        <button id="skip-btn" class="skip-btn">Skip <span id="skip-count">0</span></button>
+                    </div>
+                </div>
+            </section>
+
+            <main id="slots-grid" class="slots-grid">
             </main>
 
-        <footer>
-            <button id="reset-btn" class="secondary-btn">Reset Game</button>
-        </footer>
+            <footer>
+                <!-- Replaced Return to Menu with Reset -->
+                <button id="reset-btn" class="secondary-btn">Reset Board</button>
+            </footer>
+        </div>
     </div>
     
-    <div class="version-tag">v1.1.0</div>
+    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: var(--text-muted); opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.0</div>
 
-    <div id="modal-overlay" class="overlay">
+    <!-- MODE SELECTION MODAL -->
+    <div id="mode-modal" class="overlay">
         <div class="modal">
-            <h2 id="modal-title">Game Over</h2>
-            <p id="modal-message">Sequence error.</p>
-            <button class="modal-btn" onclick="init()">New Game</button>
+            <h2>Select Difficulty</h2>
+            <div class="mode-list">
+                <button class="mode-btn" onclick="startGame('easy')">
+                    <strong>Easy</strong>
+                    <span>10 Slots • 3 Skips</span>
+                </button>
+                <button class="mode-btn" onclick="startGame('medium')">
+                    <strong>Medium</strong>
+                    <span>10 Slots • Standard Rules</span>
+                </button>
+                <button class="mode-btn" onclick="startGame('hard')">
+                    <strong>Hard</strong>
+                    <span>20 Slots • No Skips</span>
+                </button>
+                <button class="mode-btn" onclick="startGame('extreme')">
+                    <strong>Extreme</strong>
+                    <span>10 Slots • Range 1-100</span>
+                </button>
+            </div>
+            <button class="close-btn" onclick="closeAllModals()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- ABOUT MODAL -->
+    <div id="about-modal" class="overlay">
+        <div class="modal">
+            <h2>About NumLock</h2>
+            <p>
+                NumLock is a game of probability and risk management. 
+                <br><br>
+                <strong>Goal:</strong> Fill the board with random numbers in purely ascending order.
+                <br><br>
+                Once a number is placed, it cannot be moved. If you roll a number that cannot fit anywhere, the game enters a dead state.
+            </p>
+            <button class="modal-btn" onclick="closeAllModals()">Close</button>
+        </div>
+    </div>
+
+    <!-- WIN MODAL (No Game Over Modal for Loss anymore) -->
+    <div id="game-end-modal" class="overlay">
+        <div class="modal win-modal">
+            <h2 id="end-title">Completed!</h2>
+            <p id="end-message">All slots filled successfully.</p>
+            <button class="modal-btn" onclick="resetGame()">Play Again</button>
+            <button class="close-btn" onclick="returnToMenu()">Main Menu</button>
         </div>
     </div>
 
@@ -299,26 +409,100 @@
            FILE: script.js
            ========================================= */
 
-        const TOTAL_SLOTS = 10;
-        const MAX_NUMBER = 1000;
         const CHEAT_CODE = "wingame";
 
-        let slots = Array(TOTAL_SLOTS).fill(null);
+        // Global Game Configuration
+        let config = {
+            totalSlots: 10,
+            maxNumber: 1000,
+            initialSkips: 0
+        };
+
+        // Game State
+        let slots = [];
         let currentRoll = null;
         let gameOver = false;
         let cheatBuffer = "";
         let audioCtx;
         let currentScore = 0;
         let shuffleInterval = null; 
+        let remainingSkips = 0;
+        let totalSkippedDuplicates = 0;
 
+        // DOM Elements
+        const mainMenu = document.getElementById('main-menu');
+        const gameInterface = document.getElementById('game-interface');
         const slotsGrid = document.getElementById('slots-grid');
         const rollBtn = document.getElementById('roll-btn');
         const rollDisplay = document.getElementById('current-roll-display');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const modalTitle = document.getElementById('modal-title');
-        const modalMessage = document.getElementById('modal-message');
-        const resetBtn = document.getElementById('reset-btn');
+        const skipBtn = document.getElementById('skip-btn');
+        const skipCountSpan = document.getElementById('skip-count');
+        const gameModeDisplay = document.getElementById('game-mode-display');
+        const endModal = document.getElementById('game-end-modal');
+        const endTitle = document.getElementById('end-title');
+        const endMessage = document.getElementById('end-message');
         const devIndicator = document.getElementById('dev-indicator');
+        const resetBtn = document.getElementById('reset-btn');
+        const topMenuLink = document.getElementById('top-menu-link');
+
+        // --- MENU NAVIGATION ---
+        
+        function openModeSelect() {
+            document.getElementById('mode-modal').classList.add('visible');
+        }
+
+        function openAbout() {
+            document.getElementById('about-modal').classList.add('visible');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.overlay').forEach(el => el.classList.remove('visible'));
+        }
+
+        function returnToMenu() {
+            closeAllModals();
+            gameInterface.style.display = 'none';
+            topMenuLink.style.display = 'none';
+            mainMenu.style.display = 'flex';
+            document.body.className = '';
+        }
+
+        // --- GAME INITIALIZATION ---
+
+        function startGame(mode) {
+            // Set Config based on Mode
+            switch(mode) {
+                case 'easy':
+                    config = { totalSlots: 10, maxNumber: 1000, initialSkips: 3 };
+                    gameModeDisplay.textContent = "Mode: Easy";
+                    break;
+                case 'medium':
+                    config = { totalSlots: 10, maxNumber: 1000, initialSkips: 0 };
+                    gameModeDisplay.textContent = "Mode: Standard";
+                    break;
+                case 'hard':
+                    config = { totalSlots: 20, maxNumber: 1000, initialSkips: 0 };
+                    gameModeDisplay.textContent = "Mode: Hard";
+                    break;
+                case 'extreme':
+                    config = { totalSlots: 10, maxNumber: 100, initialSkips: 0 };
+                    gameModeDisplay.textContent = "Mode: Extreme (1-100)";
+                    break;
+            }
+
+            // Switch Views
+            closeAllModals();
+            mainMenu.style.display = 'none';
+            gameInterface.style.display = 'block';
+            topMenuLink.style.display = 'block';
+
+            init();
+        }
+
+        function resetGame() {
+            closeAllModals();
+            init();
+        }
 
         function init() {
             if (shuffleInterval) {
@@ -326,26 +510,42 @@
                 shuffleInterval = null;
             }
             
+            // Cleanup UI
             slotsGrid.innerHTML = '';
-            modalOverlay.classList.remove('visible');
-            
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            slots = Array(TOTAL_SLOTS).fill(null);
+            // Reset Logic
+            slots = Array(config.totalSlots).fill(null);
             currentRoll = null;
             gameOver = false;
             cheatBuffer = "";
             currentScore = 0;
-            
-            document.body.className = '';
+            remainingSkips = config.initialSkips;
+
+            // Reset Styles
+            document.body.className = ''; // Remove dead state or pressure classes
             devIndicator.classList.remove('visible');
             rollDisplay.className = 'number-display'; 
-            resetBtn.classList.remove('btn-critical');
             document.querySelector('.roll-card').classList.remove('rolling'); 
-            
-            for (let i = 0; i < TOTAL_SLOTS; i++) {
+            rollDisplay.textContent = "?";
+            rollBtn.disabled = false;
+
+            // Setup Skips
+            if (remainingSkips > 0) {
+                skipBtn.style.display = 'inline-block';
+                skipBtn.disabled = true; // Disabled until roll
+                skipCountSpan.textContent = remainingSkips;
+            } else {
+                skipBtn.style.display = 'none';
+            }
+
+            // Setup Grid
+            slotsGrid.className = 'slots-grid';
+            if (config.totalSlots > 10) slotsGrid.classList.add('large-grid');
+
+            for (let i = 0; i < config.totalSlots; i++) {
                 const slotDiv = document.createElement('div');
                 slotDiv.classList.add('slot');
                 slotDiv.dataset.index = i; 
@@ -353,9 +553,6 @@
                 slotDiv.addEventListener('click', () => handleSlotClick(i));
                 slotsGrid.appendChild(slotDiv);
             }
-            
-            rollDisplay.textContent = "?";
-            rollBtn.disabled = false;
         }
 
         function initAudio() {
@@ -384,34 +581,64 @@
             osc.stop(now + 0.04);
         }
 
+        // --- CORE LOGIC ---
+
         function rollNumber() {
             if (gameOver || currentRoll !== null) return;
             initAudio();
             rollBtn.disabled = true;
+            if (remainingSkips > 0) skipBtn.disabled = true;
+
             document.querySelector('.roll-card').classList.add('rolling');
             
-            document.body.classList.remove('state-doom');
-            
             let iterations = 0;
-            const finalResult = Math.floor(Math.random() * MAX_NUMBER) + 1;
+            
+            // --- UNIQUE ROLL SYSTEM ---
+            if (slots.every(s => s !== null)) return;
+
+            let finalResult;
+            let safetyCounter = 0;
+
+            // Force unique number & Improve randomness
+            while (true) {
+                // Incorporate date time to ensure salt changes on rapid clicks
+                const salt = Date.now() % 100; 
+                const rawRand = Math.random() * config.maxNumber;
+                // Add minor variation to break potential engine caching/patterns
+                finalResult = Math.floor(rawRand) + 1;
+                
+                if (slots.includes(finalResult)) {
+                    totalSkippedDuplicates++;
+                    safetyCounter++;
+                    if (safetyCounter > 5000) break; 
+                } else {
+                    break;
+                }
+            }
+            // --------------------------
 
             shuffleInterval = setInterval(() => {
                 playTick();
-                rollDisplay.textContent = Math.floor(Math.random() * MAX_NUMBER) + 1;
+                // Visual shuffle: Show numbers in full range to avoid "perceived" sticking
+                rollDisplay.textContent = Math.floor(Math.random() * config.maxNumber) + 1;
                 iterations++;
 
-                if (iterations >= 12) {
+                if (iterations >= 10) {
                     clearInterval(shuffleInterval);
                     shuffleInterval = null;
                     currentRoll = finalResult;
                     rollDisplay.textContent = currentRoll;
                     document.querySelector('.roll-card').classList.remove('rolling');
                     
+                    if (remainingSkips > 0) skipBtn.disabled = false;
+
                     if (!canPlaceAnywhere(currentRoll)) {
-                        document.body.classList.add('state-doom');
-                        rollDisplay.classList.remove('shake-lvl-1', 'shake-lvl-2', 'shake-lvl-3');
-                        resetBtn.classList.add('btn-critical');
-                        gameOver = true;
+                        if (remainingSkips > 0) {
+                            shakeUI(skipBtn);
+                        } else {
+                            // ENTER DEAD STATE instead of modal
+                            triggerDeadState();
+                        }
                     } else {
                         enableValidSlots(); 
                     }
@@ -419,8 +646,24 @@
             }, 50);
         }
 
+        function useSkip() {
+            if (remainingSkips <= 0 || currentRoll === null) return;
+            
+            remainingSkips--;
+            skipCountSpan.textContent = remainingSkips;
+            
+            // Auto-reroll feature
+            currentRoll = null;
+            disableSlots();
+            
+            // Immediately roll new number
+            rollNumber(); 
+        }
+
+        skipBtn.addEventListener('click', useSkip);
+
         function canPlaceAnywhere(val) {
-            for (let i = 0; i < TOTAL_SLOTS; i++) {
+            for (let i = 0; i < config.totalSlots; i++) {
                 if (slots[i] === null && isValidPlacement(i, val)) {
                     return true;
                 }
@@ -438,16 +681,18 @@
 
             if (isValidPlacement(index, currentRoll)) {
                 placeNumber(index, currentRoll);
+                
                 if (slots.every(s => s !== null)) {
                     triggerWin();
                 } else {
                     currentRoll = null;
                     rollDisplay.textContent = "?";
                     rollBtn.disabled = false;
+                    if(remainingSkips > 0) skipBtn.disabled = true;
                     disableSlots();
                 }
             } else {
-                triggerLoss(currentRoll);
+                shakeUI(slotsGrid.children[index]);
             }
         }
 
@@ -463,24 +708,26 @@
         }
 
         function updatePressure(score) {
+            // Only update pressure if not already in dead state or game over
+            if (gameOver) return;
+
             document.body.className = '';
-            rollDisplay.classList.remove('shake-lvl-1', 'shake-lvl-2', 'shake-lvl-3');
+            const ratio = score / config.totalSlots;
             
-            if (score === 5) document.body.classList.add('pressure-5');
-            else if (score === 6) document.body.classList.add('pressure-6');
-            else if (score === 7) document.body.classList.add('pressure-7');
-            else if (score === 8) document.body.classList.add('pressure-8');
-            else if (score === 9) document.body.classList.add('pressure-9');
+            if (ratio > 0.4) document.body.classList.add('pressure-5');
+            if (ratio > 0.6) document.body.classList.add('pressure-6');
+            if (ratio > 0.7) document.body.classList.add('pressure-7');
+            if (ratio > 0.8) document.body.classList.add('pressure-8');
+            if (ratio > 0.9) document.body.classList.add('pressure-9');
             
-            if (score === 7) rollDisplay.classList.add('shake-lvl-1');
-            if (score === 8) rollDisplay.classList.add('shake-lvl-2');
-            if (score === 9) rollDisplay.classList.add('shake-lvl-3');
+            if (ratio > 0.7) rollDisplay.classList.add('shake-lvl-1');
+            else rollDisplay.classList.remove('shake-lvl-1');
         }
 
         function isValidPlacement(index, val) {
             for (let i = 0; i < index; i++) 
                 if (slots[i] !== null && slots[i] >= val) return false;
-            for (let i = index + 1; i < TOTAL_SLOTS; i++) 
+            for (let i = index + 1; i < config.totalSlots; i++) 
                 if (slots[i] !== null && slots[i] <= val) return false;
             return true;
         }
@@ -514,29 +761,22 @@
             ], { duration: 300 });
         }
 
+        function triggerDeadState() {
+            gameOver = true;
+            document.body.classList.add('state-dead');
+            // The footer button is now 'Reset Board', which remains clickable
+            // due to CSS pointer-events on body.state-dead #reset-btn
+        }
+
         function triggerWin() {
             gameOver = true;
-            modalTitle.textContent = "Completed";
-            modalTitle.style.color = "var(--text-main)";
-            modalMessage.textContent = "All 10 slots filled successfully.";
-            modalOverlay.classList.add('visible');
+            endTitle.textContent = "Completed!";
+            endMessage.textContent = `All ${config.totalSlots} slots filled successfully.`;
+            endModal.classList.add('visible');
             startConfetti();
         }
 
-        function triggerLoss(val) {
-            gameOver = true;
-            modalTitle.textContent = "Game Over";
-            modalTitle.style.color = "var(--error)";
-            modalMessage.textContent = `${val} cannot be placed there.`;
-            modalOverlay.classList.add('visible');
-        }
-
-        function activateDevMode(visualScore) {
-            devIndicator.classList.add('visible');
-            currentScore = visualScore;
-            updatePressure(visualScore);
-        }
-
+        // --- DEV TOOLS ---
         window.addEventListener('keydown', (e) => {
             if (e.key.length === 1 && /[a-zA-Z0-9]/.test(e.key)) {
                 cheatBuffer += e.key.toLowerCase();
@@ -544,28 +784,24 @@
 
                 if (cheatBuffer.endsWith(CHEAT_CODE)) {
                     slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });
-                    activateDevMode(10); 
+                    devIndicator.classList.add('visible');
                     triggerWin();
                     cheatBuffer = "";
                 }
-                else if (cheatBuffer.endsWith("fill5")) { activateDevMode(5); }
-                else if (cheatBuffer.endsWith("fill6")) { activateDevMode(6); }
-                else if (cheatBuffer.endsWith("fill7")) { activateDevMode(7); }
-                else if (cheatBuffer.endsWith("fill8")) { activateDevMode(8); }
-                else if (cheatBuffer.endsWith("fill9")) { activateDevMode(9); }
             }
         });
 
         rollBtn.addEventListener('click', rollNumber);
-        resetBtn.addEventListener('click', init);
+        resetBtn.addEventListener('click', resetGame); // New Reset functionality
 
+        // --- CONFETTI (Visuals) ---
         function startConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             const particles = [];
-            const colors = ['#ffffff', '#a1a1aa']; 
+            const colors = ['#ffffff', '#a1a1aa', '#fbbf24']; // Added Gold
 
             function Particle() {
                 this.x = Math.random() * canvas.width;
@@ -597,7 +833,10 @@
             function animate() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 particles.forEach(p => { p.update(); p.draw(); });
-                if(gameOver) requestAnimationFrame(animate);
+                // Keep animating regardless of gameOver state to ensure it doesn't freeze on win
+                if(endModal.classList.contains('visible')) {
+                    requestAnimationFrame(animate);
+                }
             }
             animate();
             
@@ -606,8 +845,6 @@
                 canvas.height = window.innerHeight;
             });
         }
-        
-        init();
     </script>
 </body>
 </html>
