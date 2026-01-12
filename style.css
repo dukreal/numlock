@@ -48,20 +48,22 @@ body {
 
 /* --- NAVIGATION --- */
 .top-menu-link {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  z-index: 20;
-  transition: color 0.2s;
-  display: none; /* Hidden in main menu */
+    position: absolute;
+    top: 25px;     
+    left: 25px;   
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    z-index: 20;
+    transition: all 0.2s ease;
+    display: none; 
 }
-.top-menu-link:hover {
-  color: var(--text-main);
+
+.top-menu-link:hover { 
+    color: var(--text-main); 
+    transform: translateX(-3px); 
 }
 
 /* --- MAIN MENU STYLES --- */
