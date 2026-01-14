@@ -358,6 +358,263 @@ body.pressure-7 { --bg-body: #380808; --bg-card: #551010; --border-active: #b91c
 body.pressure-8 { --bg-body: #450a0a; --bg-card: #601414; --accent-primary: #fca5a5; --accent-bg: #450a0a; }
 body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda4af; --accent-bg: #881337; }
 
+/* --- MOBILE RESPONSIVE DESIGN --- */
+@media (max-width: 768px) {
+    body {
+        min-height: 100dvh; /* Use dynamic viewport height for mobile */
+        overflow-y: auto;
+    }
+
+    .game-wrapper {
+        max-width: 100%;
+        padding: 20px 16px;
+    }
+
+    .top-menu-link {
+        top: 15px;
+        left: 15px;
+        font-size: 1rem;
+    }
+
+    .menu-title {
+        font-size: 2.5rem;
+        margin-bottom: 8px;
+    }
+
+    .menu-subtitle {
+        margin-bottom: 30px;
+        font-size: 0.95rem;
+    }
+
+    .menu-btn-group {
+        max-width: 100%;
+        gap: 12px;
+    }
+
+    .menu-btn {
+        padding: 14px;
+        font-size: 0.95rem;
+    }
+
+    /* Game Interface Mobile */
+    header {
+        margin-bottom: 20px;
+    }
+
+    header h1 {
+        font-size: 1.3rem;
+    }
+
+    header p {
+        font-size: 0.8rem;
+    }
+
+    .roll-stage {
+        margin-bottom: 20px;
+    }
+
+    .number-display {
+        font-size: 3.5rem;
+        min-height: 60px;
+    }
+
+    #roll-btn {
+        max-width: 100%;
+        padding: 12px;
+        font-size: 0.9rem;
+        margin-top: 15px;
+    }
+
+    .skip-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+
+    .skip-btn span {
+        padding: 2px 4px;
+        font-size: 0.65rem;
+        margin-left: 4px;
+    }
+
+    /* Grid Responsiveness */
+    .slots-grid {
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+    .slots-grid.large-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+    }
+
+    .slot {
+        border-radius: 6px;
+    }
+
+    .slot-idx {
+        font-size: 0.55rem;
+        top: 4px;
+        left: 6px;
+    }
+
+    .slot-val {
+        font-size: 1rem;
+    }
+
+    footer {
+        margin-top: 25px;
+    }
+
+    .secondary-btn {
+        width: 100%;
+        min-width: auto;
+        padding: 12px;
+        font-size: 0.85rem;
+    }
+
+    .version-tag {
+        bottom: 10px !important;
+        right: 10px !important;
+        font-size: 0.6rem !important;
+    }
+
+    /* Modal Mobile Adjustments */
+    .modal {
+        width: 90%;
+        max-width: 100%;
+        padding: 24px 16px;
+        border-radius: 12px;
+    }
+
+    .modal h2 {
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+    }
+
+    .modal p {
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .modal.about-modal {
+        max-width: 100%;
+    }
+
+    .about-content {
+        max-height: 55vh;
+        padding-right: 6px;
+    }
+
+    .about-section {
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+    }
+
+    .about-section h3 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+
+    .about-section p {
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+    }
+
+    .tips-list li {
+        font-size: 0.85rem;
+        padding: 5px 0 5px 20px;
+    }
+
+    .tips-list li:before {
+        left: 6px;
+    }
+
+    .modal-btn,
+    .close-btn {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    .mode-btn {
+        padding: 14px;
+        font-size: 0.9rem;
+    }
+
+    .mode-btn strong {
+        font-size: 1rem;
+        margin-bottom: 3px;
+    }
+
+    .mode-btn span {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .game-wrapper {
+        padding: 16px 12px;
+    }
+
+    .top-menu-link {
+        top: 12px;
+        left: 12px;
+        font-size: 0.9rem;
+    }
+
+    .menu-title {
+        font-size: 2rem;
+        margin-bottom: 6px;
+    }
+
+    .menu-subtitle {
+        margin-bottom: 25px;
+        font-size: 0.85rem;
+    }
+
+    .number-display {
+        font-size: 3rem;
+        min-height: 50px;
+    }
+
+    #roll-btn {
+        margin-top: 12px;
+        padding: 11px;
+    }
+
+    .slots-grid {
+        gap: 8px;
+    }
+
+    .slots-grid.large-grid {
+        gap: 5px;
+    }
+
+    .slot-val {
+        font-size: 0.95rem;
+    }
+
+    .modal {
+        padding: 20px 14px;
+        border-radius: 10px;
+    }
+
+    .modal h2 {
+        font-size: 1.1rem;
+    }
+
+    .about-section h3 {
+        font-size: 0.95rem;
+    }
+
+    .about-section p {
+        font-size: 0.8rem;
+    }
+
+    .tips-list li {
+        font-size: 0.8rem;
+    }
+}
+
 /* Shake Levels */
 @keyframes shake-1 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(1px, 1px); } 75% { transform: translate(-1px, -1px); } }
 @keyframes shake-2 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, 0); } 75% { transform: translate(2px, -2px); } }
