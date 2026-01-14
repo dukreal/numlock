@@ -21,6 +21,7 @@
 * {
     box-sizing: border-box;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -31,8 +32,9 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    height: 100dvh; /* Force full height on mobile without scroll */
     margin: 0;
-    overflow: hidden;
+    overflow: hidden; /* Prevent scrolling */
     transition: background-color 0.8s ease, color 0.5s ease;
 }
 
@@ -40,20 +42,24 @@ body {
 .game-wrapper {
     width: 100%;
     max-width: 500px;
-    padding: 40px 20px;
+    height: 100%;
+    padding: 20px;
     text-align: center;
     position: relative;
     z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Vertically center content */
 }
 
 /* --- NAVIGATION --- */
 .top-menu-link {
     position: absolute;
     top: 25px;
-    left: 25px; /* Moved to Upper Left */
+    left: 25px; 
     color: var(--text-muted);
     text-decoration: none;
-    font-size: 1.2rem; /* Increased size */
+    font-size: 1.2rem;
     font-weight: 500;
     cursor: pointer;
     z-index: 20;
@@ -77,7 +83,10 @@ body {
 }
 
 #game-interface {
-    display: none; /* Hidden by default */
+    display: none; 
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
     animation: fadeIn 0.5s ease;
 }
 
@@ -124,23 +133,22 @@ body {
 }
 
 /* --- GAME HEADER --- */
-header { margin-bottom: 30px; transition: opacity 0.5s; }
+header { margin-bottom: 2vh; transition: opacity 0.5s; }
 header h1 { font-weight: 700; margin: 0; font-size: 1.5rem; color: var(--text-main); }
-header p { color: var(--text-muted); margin-top: 8px; font-size: 0.9rem; }
+header p { color: var(--text-muted); margin-top: 5px; font-size: 0.9rem; }
 
 /* --- STAGE AREA --- */
-.roll-stage { display: flex; justify-content: center; margin-bottom: 30px; flex-direction: column; align-items: center; transition: opacity 0.5s; }
-.roll-card { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.roll-stage { display: flex; justify-content: center; margin-bottom: 2vh; flex-direction: column; align-items: center; transition: opacity 0.5s; }
+.roll-card { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
 
 .number-display {
-    font-size: 5rem; font-weight: 300; line-height: 1; margin: 0;
+    font-size: 4.5rem; font-weight: 300; line-height: 1; margin: 0;
     color: var(--text-main); font-variant-numeric: tabular-nums;
-    letter-spacing: -2px; min-height: 80px; display: inline-block;
+    letter-spacing: -2px; min-height: 70px; display: inline-block;
     transition: color 0.1s ease;
 }
 .rolling .number-display { opacity: 0.8; }
 
-/* Critical Text Color for Roll 10 */
 .number-display.crit-text { 
     color: var(--error) !important; 
     text-shadow: 0 0 30px rgba(239, 68, 68, 0.3); 
@@ -153,13 +161,13 @@ button {
     font-family: inherit; transition: all 0.3s ease;
 }
 
-#roll-btn { background: var(--accent-primary); color: var(--accent-bg); margin-top: 20px; width: 100%; max-width: 200px; }
+#roll-btn { background: var(--accent-primary); color: var(--accent-bg); margin-top: 10px; width: 100%; max-width: 200px; }
 #roll-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-2px); }
 #roll-btn:disabled { background: var(--border-subtle); color: var(--text-muted); cursor: not-allowed; transform: none; }
 
 /* --- SKIP BUTTON --- */
 #skip-container {
-    height: 40px;
+    height: 30px;
     margin-top: 10px;
 }
 .skip-btn {
@@ -184,7 +192,7 @@ button {
 }
 
 /* --- FOOTER / RESET --- */
-footer { margin-top: 40px; }
+footer { margin-top: 3vh; }
 .secondary-btn {
     background: transparent; color: var(--text-muted);
     border: 1px solid var(--border-subtle); font-size: 0.8rem;
@@ -193,10 +201,18 @@ footer { margin-top: 40px; }
 .secondary-btn:hover { border-color: var(--text-main); color: var(--text-main); }
 
 /* --- SLOTS GRID --- */
-.slots-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 10px; transition: opacity 0.5s, filter 0.5s; }
+.slots-grid { 
+    display: grid; 
+    grid-template-columns: repeat(5, 1fr); /* Always 5 columns */
+    gap: 10px; 
+    margin-top: 10px; 
+    width: 100%;
+    transition: opacity 0.5s, filter 0.5s; 
+}
 
+/* For Hard Mode (20 slots), keep 5 cols so it becomes 5x4 */
 .slots-grid.large-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
-.slots-grid.large-grid .slot-val { font-size: 0.9rem; }
+.slots-grid.large-grid .slot-val { font-size: 0.8rem; }
 
 .slot {
     aspect-ratio: 1/1; background: var(--bg-slot);
@@ -248,6 +264,8 @@ body.state-success .slot:not(.win-success) {
     box-shadow: 0 20px 50px rgba(0,0,0,0.5);
     transform: scale(0.95); transition: transform 0.2s;
     position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 .overlay.visible .modal { transform: scale(1); }
 .modal h2 { margin: 0 0 15px 0; font-size: 1.5rem; color: var(--text-main); }
@@ -255,11 +273,7 @@ body.state-success .slot:not(.win-success) {
 
 /* About Modal Styles */
 .modal.about-modal { max-width: 500px; }
-.about-content { text-align: left; margin-bottom: 20px; max-height: none; overflow: visible; padding-right: 0; }
-.about-content::-webkit-scrollbar { width: 6px; }
-.about-content::-webkit-scrollbar-track { background: transparent; }
-.about-content::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 3px; }
-.about-content::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+.about-content { text-align: left; margin-bottom: 20px; }
 .about-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-subtle); }
 .about-section:last-child { border-bottom: none; }
 .about-section h3 { font-size: 1.1rem; color: var(--text-main); margin: 0 0 10px 0; font-weight: 600; }
@@ -268,7 +282,7 @@ body.state-success .slot:not(.win-success) {
 .tips-list li { color: var(--text-muted); font-size: 0.9rem; padding: 6px 0 6px 24px; position: relative; }
 .tips-list li:before { content: "▸"; position: absolute; left: 8px; color: var(--accent-primary); font-weight: bold; }
 
-/* Win Modal Specifics */
+/* Win Modal */
 .modal.win-modal { border-color: var(--success); box-shadow: 0 20px 60px rgba(16, 185, 129, 0.15); }
 .modal.win-modal h2 { color: var(--success); }
 
@@ -276,357 +290,145 @@ body.state-success .slot:not(.win-success) {
 .close-btn { background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); margin-top: 10px; width: 100%; }
 .close-btn:hover { border-color: var(--text-main); color: var(--text-main); }
 
-/* FIXED MODE LIST UI */
-.mode-list { 
-    display: grid; 
-    grid-template-columns: 1fr;
-    gap: 12px; 
-    width: 100%; 
-}
+/* Mode List */
+.mode-list { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; }
 .mode-btn {
-    background: var(--bg-slot);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-main);
-    padding: 16px;
-    border-radius: 8px;
-    text-align: left;
-    transition: all 0.2s;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    background: var(--bg-slot); border: 1px solid var(--border-subtle);
+    color: var(--text-main); padding: 16px; border-radius: 8px;
+    text-align: left; transition: all 0.2s; display: flex; flex-direction: column; justify-content: center;
 }
-.mode-btn:hover { 
-    border-color: var(--text-main); 
-    background: var(--border-subtle);
-    transform: translateY(-2px); 
-}
-.mode-btn strong { 
-    display: block; 
-    font-size: 1.05rem; 
-    margin-bottom: 4px; 
-    color: var(--text-main);
-}
-.mode-btn span { 
-    font-size: 0.85rem; 
-    color: var(--text-muted); 
-}
+.mode-btn:hover { border-color: var(--text-main); background: var(--border-subtle); transform: translateY(-2px); }
+.mode-btn strong { display: block; font-size: 1.05rem; margin-bottom: 4px; color: var(--text-main); }
+.mode-btn span { font-size: 0.85rem; color: var(--text-muted); }
 
-/* --- DEAD STATE (Visual Failure) --- */
-body.state-dead {
-    background-color: #09090b !important; /* Force return to default zinc */
-    color: var(--text-muted) !important;
-}
+/* --- DEAD STATE --- */
+body.state-dead { background-color: #09090b !important; color: var(--text-muted) !important; }
+body.state-dead .slots-grid, body.state-dead header { opacity: 0.4; filter: grayscale(1); pointer-events: none; }
+body.state-dead .roll-stage { opacity: 0.7; }
+body.state-dead .slot.filled { background-color: var(--bg-slot); border-color: var(--border-subtle); color: var(--text-muted); }
+body.state-dead #reset-btn { border-color: var(--text-main); color: var(--text-main); animation: pulse-reset 2s infinite; }
+@keyframes pulse-reset { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
 
-body.state-dead .slots-grid,
-body.state-dead header {
-    opacity: 0.4;
-    filter: grayscale(1);
-    pointer-events: none;
-}
-
-body.state-dead .roll-stage {
-    opacity: 0.7;
-    /* Do not grayscale this, keep red text */
-}
-
-body.state-dead .slot.filled {
-    background-color: var(--bg-slot);
-    border-color: var(--border-subtle);
-    color: var(--text-muted);
-}
-
-body.state-dead #reset-btn {
-    border-color: var(--text-main);
-    color: var(--text-main);
-    animation: pulse-reset 2s infinite;
-}
-@keyframes pulse-reset {
-    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
-    70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-}
-
-/* --- CONFETTI --- */
+/* --- CONFETTI & DEV --- */
 #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; transition: opacity 1s ease; }
 .dev-indicator { position: fixed; top: 20px; right: 20px; opacity: 0; color: #fff; font-family: monospace; }
 .dev-indicator.visible { opacity: 1; }
 
-/* --- ANIMATIONS (Shakes & Pressure) --- */
+/* --- ANIMATIONS --- */
 body.pressure-5 { --bg-body: #1c1917; --bg-card: #292524; }
 body.pressure-6 { --bg-body: #281205; --bg-card: #431407; }
 body.pressure-7 { --bg-body: #380808; --bg-card: #551010; --border-active: #b91c1c; }
 body.pressure-8 { --bg-body: #450a0a; --bg-card: #601414; --accent-primary: #fca5a5; --accent-bg: #450a0a; }
 body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda4af; --accent-bg: #881337; }
 
-/* --- MOBILE RESPONSIVE DESIGN --- */
-@media (max-width: 768px) {
+@keyframes shake-1 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(1px, 1px); } 75% { transform: translate(-1px, -1px); } }
+@keyframes shake-2 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, 0); } 75% { transform: translate(2px, -2px); } }
+@keyframes shake-3 { 0%, 100% { transform: translate(0, 0); } 10% { transform: translate(-3px, -3px); } 30% { transform: translate(3px, 3px); } 50% { transform: translate(-3px, 3px); } 70% { transform: translate(3px, -3px); } 90% { transform: translate(-1px, 1px); } }
+.shake-lvl-1 { animation: shake-1 0.5s infinite; }
+.shake-lvl-2 { animation: shake-2 0.3s infinite; }
+.shake-lvl-3 { animation: shake-3 0.15s infinite; color: var(--error) !important; }
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS (320px - 480px)
+   Enforcing 5 columns and Single Screen View
+   ========================================================================== */
+
+@media (max-width: 500px) {
+    /* 
+       Override global body settings to ensure full viewport usage 
+       without scroll bars on mobile.
+    */
     body {
-        min-height: 100dvh; /* Use dynamic viewport height for mobile */
-        overflow-y: auto;
+        align-items: flex-start; /* Fix centering issues on very short screens */
     }
 
     .game-wrapper {
-        max-width: 100%;
-        padding: 20px 16px;
+        padding: 10px 15px;
+        /* Use flex distribution to fill vertical space nicely */
+        justify-content: space-evenly; 
     }
 
+    /* Adjust Navigation Position */
     .top-menu-link {
+        position: absolute;
         top: 15px;
         left: 15px;
-        font-size: 1rem;
-    }
-
-    .menu-title {
-        font-size: 2.5rem;
-        margin-bottom: 8px;
-    }
-
-    .menu-subtitle {
-        margin-bottom: 30px;
-        font-size: 0.95rem;
-    }
-
-    .menu-btn-group {
-        max-width: 100%;
-        gap: 12px;
-    }
-
-    .menu-btn {
-        padding: 14px;
-        font-size: 0.95rem;
-    }
-
-    /* Game Interface Mobile */
-    header {
-        margin-bottom: 20px;
-    }
-
-    header h1 {
-        font-size: 1.3rem;
-    }
-
-    header p {
-        font-size: 0.8rem;
-    }
-
-    .roll-stage {
-        margin-bottom: 20px;
-    }
-
-    .number-display {
-        font-size: 3.5rem;
-        min-height: 60px;
-    }
-
-    #roll-btn {
-        max-width: 100%;
-        padding: 12px;
         font-size: 0.9rem;
-        margin-top: 15px;
     }
-
-    .skip-btn {
-        padding: 6px 12px;
-        font-size: 0.75rem;
-    }
-
-    .skip-btn span {
-        padding: 2px 4px;
-        font-size: 0.65rem;
-        margin-left: 4px;
-    }
-
-    /* Grid Responsiveness */
-    .slots-grid {
-        gap: 8px;
-        margin-top: 8px;
-    }
-
-    .slots-grid.large-grid {
-        grid-template-columns: repeat(5, 1fr);
-        gap: 5px;
-    }
-
-    .slot {
-        border-radius: 6px;
-    }
-
-    .slot-idx {
-        font-size: 0.55rem;
-        top: 4px;
-        left: 6px;
-    }
-
-    .slot-val {
-        font-size: 1rem;
-    }
-
-    footer {
-        margin-top: 25px;
-    }
-
-    .secondary-btn {
-        width: 100%;
-        min-width: auto;
-        padding: 12px;
-        font-size: 0.85rem;
-    }
-
+    
     .version-tag {
         bottom: 10px !important;
         right: 10px !important;
         font-size: 0.6rem !important;
     }
 
-    /* Modal Mobile Adjustments */
-    .modal {
-        width: 90%;
-        max-width: 100%;
-        padding: 24px 16px;
-        border-radius: 12px;
+    /* Menu Screens */
+    .menu-title { font-size: 2.5rem; margin-bottom: 5px; }
+    .menu-subtitle { margin-bottom: 30px; font-size: 0.9rem; }
+    .menu-btn { padding: 14px; }
+
+    /* --- COMPACT GAME UI --- */
+    
+    /* Header Area */
+    header { margin-bottom: 10px; margin-top: 30px; /* Space for absolute menu link */ }
+    header h1 { font-size: 1.3rem; }
+    header p { font-size: 0.8rem; margin-top: 2px; }
+
+    /* Roll Display */
+    .roll-stage { margin-bottom: 10px; }
+    .number-display { 
+        font-size: 3.5rem; 
+        min-height: 55px; 
     }
 
-    .modal h2 {
-        font-size: 1.3rem;
-        margin-bottom: 12px;
-    }
-
-    .modal p {
-        font-size: 0.9rem;
-        margin-bottom: 15px;
-    }
-
-    .modal.about-modal {
-        max-width: 100%;
-    }
-
-    .about-content {
-        max-height: none;
-        overflow: visible;
-        padding-right: 0;
-    }
-
-    .about-section {
-        margin-bottom: 16px;
-        padding-bottom: 16px;
-    }
-
-    .about-section h3 {
-        font-size: 1rem;
-        margin-bottom: 8px;
-    }
-
-    .about-section p {
-        font-size: 0.85rem;
-        margin-bottom: 6px;
-    }
-
-    .tips-list li {
-        font-size: 0.85rem;
-        padding: 5px 0 5px 20px;
-    }
-
-    .tips-list li:before {
-        left: 6px;
-    }
-
-    .modal-btn,
-    .close-btn {
-        padding: 12px;
-        font-size: 0.9rem;
-    }
-
-    .mode-btn {
-        padding: 14px;
-        font-size: 0.9rem;
-    }
-
-    .mode-btn strong {
-        font-size: 1rem;
-        margin-bottom: 3px;
-    }
-
-    .mode-btn span {
-        font-size: 0.8rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .game-wrapper {
-        padding: 16px 12px;
-    }
-
-    .top-menu-link {
-        top: 12px;
-        left: 12px;
-        font-size: 0.9rem;
-    }
-
-    .menu-title {
-        font-size: 2rem;
-        margin-bottom: 6px;
-    }
-
-    .menu-subtitle {
-        margin-bottom: 25px;
-        font-size: 0.85rem;
-    }
-
-    .number-display {
-        font-size: 3rem;
-        min-height: 50px;
-    }
-
+    /* Action Buttons */
     #roll-btn {
-        margin-top: 12px;
-        padding: 11px;
+        padding: 12px;
+        margin-top: 8px;
+        max-width: 100%;
+        font-size: 0.9rem;
     }
+    
+    #skip-container { height: 25px; margin-top: 5px; }
+    .skip-btn { padding: 5px 10px; font-size: 0.75rem; }
 
+    /* Grid - ALWAYS 5 COLUMNS */
     .slots-grid {
-        gap: 8px;
+        grid-template-columns: repeat(5, 1fr) !important; /* Force 5 columns */
+        gap: 6px;
+        margin-top: 5px;
     }
-
+    
+    /* Ensure Hard Mode (20 slots) also stays 5 cols (becomes 5x4) */
     .slots-grid.large-grid {
-        gap: 5px;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 4px;
     }
 
-    .slot-val {
-        font-size: 0.95rem;
+    /* Slot sizing for small screens (320px) */
+    .slot {
+        border-radius: 6px;
     }
+    .slot-idx { font-size: 0.5rem; top: 2px; left: 4px; }
+    .slot-val { font-size: 0.9rem; }
 
-    .modal {
-        padding: 20px 14px;
-        border-radius: 10px;
-    }
+    /* Footer */
+    footer { margin-top: 15px; }
+    .secondary-btn { padding: 10px; width: 100%; font-size: 0.8rem; }
 
-    .modal h2 {
-        font-size: 1.1rem;
-    }
-
-    .about-section h3 {
-        font-size: 0.95rem;
-    }
-
-    .about-section p {
-        font-size: 0.8rem;
-    }
-
-    .tips-list li {
-        font-size: 0.8rem;
-    }
+    /* Modal adjustments for small height */
+    .modal { padding: 20px 15px; }
+    .modal h2 { font-size: 1.3rem; margin-bottom: 10px; }
+    .mode-btn { padding: 12px; }
 }
 
-/* Shake Levels */
-@keyframes shake-1 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(1px, 1px); } 75% { transform: translate(-1px, -1px); } }
-@keyframes shake-2 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, 0); } 75% { transform: translate(2px, -2px); } }
-@keyframes shake-3 { 0%, 100% { transform: translate(0, 0); } 10% { transform: translate(-3px, -3px); } 30% { transform: translate(3px, 3px); } 50% { transform: translate(-3px, 3px); } 70% { transform: translate(3px, -3px); } 90% { transform: translate(-1px, 1px); } }
-
-.shake-lvl-1 { animation: shake-1 0.5s infinite; } /* Slow/Light */
-.shake-lvl-2 { animation: shake-2 0.3s infinite; } /* Medium */
-.shake-lvl-3 { animation: shake-3 0.15s infinite; color: var(--error) !important; } /* Hard/Violent */
-
-@media (max-width: 500px) {
-    .slots-grid { grid-template-columns: repeat(2, 1fr); }
-    .slots-grid.large-grid { grid-template-columns: repeat(4, 1fr); }
-    .number-display { font-size: 4rem; }
+/* Extra small devices (iPhone SE / 320px width) */
+@media (max-width: 360px) {
+    .game-wrapper { padding: 5px 10px; }
+    header { margin-top: 25px; } /* Tighten top */
+    .number-display { font-size: 3rem; min-height: 45px; }
+    #roll-btn { padding: 10px; margin-top: 5px; }
+    .slots-grid { gap: 4px; }
+    .slot-idx { display: none; } /* Hide small numbers if too cramped */
+    .slot-val { font-size: 0.85rem; }
 }
