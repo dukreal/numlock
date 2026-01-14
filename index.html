@@ -87,15 +87,27 @@
 
     <!-- ABOUT MODAL -->
     <div id="about-modal" class="overlay">
-        <div class="modal">
+        <div class="modal about-modal">
             <h2>About NumLock</h2>
-            <p>
-                NumLock is a game of probability and risk management. 
-                <br><br>
-                <strong>Goal:</strong> Fill the board with random numbers in purely ascending order.
-                <br><br>
-                Once a number is placed, it cannot be moved. If you roll a number that cannot fit anywhere, the game enters a dead state.
-            </p>
+            <div class="about-content">
+                <div class="about-section">
+                    <h3>The Game</h3>
+                    <p>NumLock is a strategic puzzle game that combines probability with tactical decision-making. Every roll matters, and one wrong placement can determine your fate.</p>
+                </div>
+                <div class="about-section">
+                    <h3>How It Works</h3>
+                    <p><strong>Goal:</strong> Fill all slots with numbers in strictly ascending order.</p>
+                    <p>Roll the dice, choose where to place your number wisely—once placed, numbers cannot be moved. If you run out of valid positions, it's game over.</p>
+                </div>
+                <div class="about-section">
+                    <h3>Strategy Tips</h3>
+                    <ul class="tips-list">
+                        <li>Save high numbers for the rightmost slots</li>
+                        <li>Low rolls early = more flexibility later</li>
+                        <li>Use skips strategically—they're limited</li>
+                    </ul>
+                </div>
+            </div>
             <button class="modal-btn" onclick="closeAllModals()">Close</button>
         </div>
     </div>
