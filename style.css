@@ -255,7 +255,7 @@ body.state-success .slot:not(.win-success) {
 
 /* About Modal Styles */
 .modal.about-modal { max-width: 500px; }
-.about-content { text-align: left; margin-bottom: 20px; max-height: 60vh; overflow-y: auto; padding-right: 8px; }
+.about-content { text-align: left; margin-bottom: 20px; max-height: none; overflow: visible; padding-right: 0; }
 .about-content::-webkit-scrollbar { width: 6px; }
 .about-content::-webkit-scrollbar-track { background: transparent; }
 .about-content::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 3px; }
@@ -438,13 +438,13 @@ body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda
 
     /* Grid Responsiveness */
     .slots-grid {
-        gap: 10px;
+        gap: 8px;
         margin-top: 8px;
     }
 
     .slots-grid.large-grid {
         grid-template-columns: repeat(5, 1fr);
-        gap: 6px;
+        gap: 5px;
     }
 
     .slot {
@@ -501,8 +501,9 @@ body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda
     }
 
     .about-content {
-        max-height: 55vh;
-        padding-right: 6px;
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
     }
 
     .about-section {
