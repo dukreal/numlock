@@ -30,11 +30,11 @@ body {
     color: var(--text-main);
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: center; /* Vertically center globally */
     min-height: 100vh;
-    height: 100dvh; /* Force full height on mobile without scroll */
+    height: 100dvh; /* Use dynamic viewport height */
     margin: 0;
-    overflow: hidden; /* Prevent scrolling */
+    overflow: hidden;
     transition: background-color 0.8s ease, color 0.5s ease;
 }
 
@@ -44,12 +44,15 @@ body {
     max-width: 500px;
     height: 100%;
     padding: 20px;
-    text-align: center;
     position: relative;
     z-index: 10;
+    
+    /* Flexbox for Perfect Centering */
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Vertically center content */
+    align-items: center;     /* Horizontally center children */
+    justify-content: center; /* Vertically center children */
+    gap: 20px;               /* Consistent spacing between elements */
 }
 
 /* --- NAVIGATION --- */
@@ -77,16 +80,18 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
     width: 100%;
+    /* Main menu takes full height of wrapper to center itself */
+    flex: 1; 
     animation: fadeIn 0.5s ease;
 }
 
 #game-interface {
     display: none; 
     flex-direction: column;
-    height: 100%;
+    align-items: center;
     justify-content: center;
+    width: 100%;
     animation: fadeIn 0.5s ease;
 }
 
@@ -133,12 +138,26 @@ body {
 }
 
 /* --- GAME HEADER --- */
-header { margin-bottom: 2vh; transition: opacity 0.5s; }
+header { 
+    text-align: center;
+    transition: opacity 0.5s; 
+    /* Margins removed in favor of wrapper gap */
+    margin: 0; 
+    width: 100%;
+}
 header h1 { font-weight: 700; margin: 0; font-size: 1.5rem; color: var(--text-main); }
 header p { color: var(--text-muted); margin-top: 5px; font-size: 0.9rem; }
 
 /* --- STAGE AREA --- */
-.roll-stage { display: flex; justify-content: center; margin-bottom: 2vh; flex-direction: column; align-items: center; transition: opacity 0.5s; }
+.roll-stage { 
+    display: flex; 
+    justify-content: center; 
+    flex-direction: column; 
+    align-items: center; 
+    transition: opacity 0.5s;
+    width: 100%;
+    margin: 0;
+}
 .roll-card { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
 
 .number-display {
@@ -169,6 +188,9 @@ button {
 #skip-container {
     height: 30px;
     margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .skip-btn {
     background: transparent;
@@ -192,7 +214,12 @@ button {
 }
 
 /* --- FOOTER / RESET --- */
-footer { margin-top: 3vh; }
+footer { 
+    margin: 0; 
+    width: 100%; 
+    display: flex;
+    justify-content: center;
+}
 .secondary-btn {
     background: transparent; color: var(--text-muted);
     border: 1px solid var(--border-subtle); font-size: 0.8rem;
@@ -205,12 +232,13 @@ footer { margin-top: 3vh; }
     display: grid; 
     grid-template-columns: repeat(5, 1fr); /* Always 5 columns */
     gap: 10px; 
-    margin-top: 10px; 
     width: 100%;
+    margin: 0 auto; /* Horizontal center */
     transition: opacity 0.5s, filter 0.5s; 
+    justify-content: center;
 }
 
-/* For Hard Mode (20 slots), keep 5 cols so it becomes 5x4 */
+/* Hard Mode (20 slots) */
 .slots-grid.large-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .slots-grid.large-grid .slot-val { font-size: 0.8rem; }
 
@@ -241,7 +269,7 @@ footer { margin-top: 3vh; }
 }
 
 body.state-success {
-    background-color: #022c22 !important; /* Deep Green */
+    background-color: #022c22 !important; 
 }
 
 body.state-success .slot:not(.win-success) {
@@ -329,28 +357,27 @@ body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda
 .shake-lvl-3 { animation: shake-3 0.15s infinite; color: var(--error) !important; }
 
 /* ==========================================================================
-   MOBILE RESPONSIVENESS (320px - 480px)
-   Enforcing 5 columns and Single Screen View
+   MOBILE RESPONSIVENESS (320px - 500px)
+   Perfect Centering Strategy
    ========================================================================== */
 
 @media (max-width: 500px) {
     /* 
-       Override global body settings to ensure full viewport usage 
-       without scroll bars on mobile.
+       Enforce centering on Body. 
+       We removed 'align-items: flex-start' to ensure vertical centering works.
     */
     body {
-        align-items: flex-start; /* Fix centering issues on very short screens */
+        align-items: center; 
     }
 
     .game-wrapper {
-        padding: 10px 15px;
-        /* Use flex distribution to fill vertical space nicely */
-        justify-content: space-evenly; 
+        /* Distribute items tightly in the center */
+        justify-content: center; 
+        gap: 2vh; /* Use responsive gap instead of margins */
     }
 
     /* Adjust Navigation Position */
     .top-menu-link {
-        position: absolute;
         top: 15px;
         left: 15px;
         font-size: 0.9rem;
@@ -369,13 +396,16 @@ body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda
 
     /* --- COMPACT GAME UI --- */
     
-    /* Header Area */
-    header { margin-bottom: 10px; margin-top: 30px; /* Space for absolute menu link */ }
+    header { 
+        /* Rely on gap for spacing */
+        margin: 0; 
+        width: 100%;
+    }
     header h1 { font-size: 1.3rem; }
     header p { font-size: 0.8rem; margin-top: 2px; }
 
     /* Roll Display */
-    .roll-stage { margin-bottom: 10px; }
+    .roll-stage { margin: 0; }
     .number-display { 
         font-size: 3.5rem; 
         min-height: 55px; 
@@ -384,28 +414,28 @@ body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda
     /* Action Buttons */
     #roll-btn {
         padding: 12px;
-        margin-top: 8px;
+        margin-top: 5px;
         max-width: 100%;
         font-size: 0.9rem;
     }
     
-    #skip-container { height: 25px; margin-top: 5px; }
+    #skip-container { height: 25px; margin-top: 2px; }
     .skip-btn { padding: 5px 10px; font-size: 0.75rem; }
 
-    /* Grid - ALWAYS 5 COLUMNS */
+    /* Grid - ALWAYS 5 COLUMNS & CENTERED */
     .slots-grid {
-        grid-template-columns: repeat(5, 1fr) !important; /* Force 5 columns */
+        grid-template-columns: repeat(5, 1fr) !important; 
         gap: 6px;
-        margin-top: 5px;
+        width: 100%;
+        margin: 0;
     }
     
-    /* Ensure Hard Mode (20 slots) also stays 5 cols (becomes 5x4) */
     .slots-grid.large-grid {
         grid-template-columns: repeat(5, 1fr) !important;
         gap: 4px;
     }
 
-    /* Slot sizing for small screens (320px) */
+    /* Slot sizing for small screens */
     .slot {
         border-radius: 6px;
     }
@@ -413,10 +443,10 @@ body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda
     .slot-val { font-size: 0.9rem; }
 
     /* Footer */
-    footer { margin-top: 15px; }
+    footer { margin: 0; }
     .secondary-btn { padding: 10px; width: 100%; font-size: 0.8rem; }
 
-    /* Modal adjustments for small height */
+    /* Modal adjustments */
     .modal { padding: 20px 15px; }
     .modal h2 { font-size: 1.3rem; margin-bottom: 10px; }
     .mode-btn { padding: 12px; }
@@ -424,11 +454,9 @@ body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda
 
 /* Extra small devices (iPhone SE / 320px width) */
 @media (max-width: 360px) {
-    .game-wrapper { padding: 5px 10px; }
-    header { margin-top: 25px; } /* Tighten top */
+    .game-wrapper { padding: 10px 15px; gap: 1.5vh; }
     .number-display { font-size: 3rem; min-height: 45px; }
-    #roll-btn { padding: 10px; margin-top: 5px; }
     .slots-grid { gap: 4px; }
-    .slot-idx { display: none; } /* Hide small numbers if too cramped */
+    .slot-idx { display: none; } 
     .slot-val { font-size: 0.85rem; }
 }
