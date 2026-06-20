@@ -1,8 +1,22 @@
 let config = {
     totalSlots: 10,
     maxNumber: 1000,
-    initialSkips: 0
+    initialSkips: 0,
+    isExtreme: false
 };
+
+// --- SEEDED RNG (Mulberry32) ---
+function mulberry32(seed) {
+    return function() {
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}
+
+let currentSeed = 0;
+let rng = Math.random; // fallback
 
 let slots = [];
 let currentRoll = null;
@@ -56,37 +70,55 @@ function returnToMenu() {
 function startGame(mode) {
     switch(mode) {
         case 'easy':
-            config = { totalSlots: 10, maxNumber: 1000, initialSkips: 3 };
+            config = { totalSlots: 10, maxNumber: 1000, initialSkips: 3, isExtreme: false };
             gameModeDisplay.textContent = "Mode: Easy";
             break;
         case 'medium':
-            config = { totalSlots: 10, maxNumber: 1000, initialSkips: 0 };
+            config = { totalSlots: 10, maxNumber: 1000, initialSkips: 0, isExtreme: false };
             gameModeDisplay.textContent = "Mode: Standard";
             break;
         case 'hard':
-            config = { totalSlots: 20, maxNumber: 1000, initialSkips: 0 };
+            config = { totalSlots: 20, maxNumber: 1000, initialSkips: 0, isExtreme: false };
             gameModeDisplay.textContent = "Mode: Hard";
             break;
         case 'extreme':
-            config = { totalSlots: 10, maxNumber: 100, initialSkips: 0 };
+            config = { totalSlots: 10, maxNumber: 100, initialSkips: 0, isExtreme: true };
             gameModeDisplay.textContent = "Mode: Extreme (1-100)";
             break;
     }
+
+    // Generate seed for non-extreme modes
+    if (!config.isExtreme) {
+        currentSeed = Math.floor(Math.random() * 999999999);
+        rng = mulberry32(currentSeed);
+    } else {
+        rng = Math.random; // Extreme uses true random
+    }
+
     closeAllModals();
     mainMenu.style.display = 'none';
     gameInterface.style.display = 'block';
     topMenuLink.style.display = 'block';
     init();
+
+    // Update dev indicator AFTER init
+    updateDevIndicator();
 }
 
 function resetGame() {
     closeAllModals();
+    // Generate a new seed on reset
+    if (!config.isExtreme) {
+        currentSeed = Math.floor(Math.random() * 999999999);
+        rng = mulberry32(currentSeed);
+    }
     init();
+    updateDevIndicator();
 }
 
 function init() {
     isRolling = false;
-    _dm = false; // Reset dev mode on fresh start
+    // _dm is intentionally kept across resets
     slotsGrid.innerHTML = '';
     const canvas = document.getElementById('confetti-canvas');
     const ctx = canvas.getContext('2d');
@@ -102,7 +134,7 @@ function init() {
     forcedRolls = []; 
 
     document.body.className = '';
-    devIndicator.classList.remove('visible');
+    if (!_dm) devIndicator.classList.remove('visible');
     rollDisplay.className = 'number-display'; 
     document.querySelector('.roll-card').classList.remove('rolling'); 
     rollDisplay.textContent = "?";
@@ -191,7 +223,7 @@ function rollNumber() {
         let safetyCounter = 0;
         while (true) {
             safetyCounter++;
-            const rawRand = Math.random() * config.maxNumber;
+            const rawRand = rng() * config.maxNumber;
             finalResult = Math.floor(rawRand) + 1;
             
             if (slots.includes(finalResult)) {
@@ -401,6 +433,50 @@ function triggerWin() {
     }, 2000);
 }
 
+// --- DEV TOOLS ---
+function simulateSeed(seed, cfg) {
+    const simRng = mulberry32(seed);
+    const simSlots = Array(cfg.totalSlots).fill(null);
+
+    for (let roll = 0; roll < cfg.totalSlots; roll++) {
+        let result;
+        let safety = 0;
+        while (true) {
+            safety++;
+            result = Math.floor(simRng() * cfg.maxNumber) + 1;
+            if (simSlots.includes(result)) {
+                if (safety > 5000) break;
+                continue;
+            }
+            break;
+        }
+
+        // Check if it can be placed anywhere
+        let placed = false;
+        for (let i = 0; i < cfg.totalSlots; i++) {
+            if (simSlots[i] === null) {
+                let valid = true;
+                for (let j = 0; j < i; j++) if (simSlots[j] !== null && simSlots[j] >= result) { valid = false; break; }
+                for (let j = i + 1; j < cfg.totalSlots; j++) if (simSlots[j] !== null && simSlots[j] <= result) { valid = false; break; }
+                if (valid) { simSlots[i] = result; placed = true; break; }
+            }
+        }
+
+        if (!placed) return false; // Dead state hit
+    }
+    return simSlots.every(s => s !== null);
+}
+
+function updateDevIndicator() {
+    if (!_dm) return;
+    if (config.isExtreme) {
+        devIndicator.textContent = 'DEVMODE • Extreme: Pure RNG';
+        return;
+    }
+    const isWinnable = simulateSeed(currentSeed, config);
+    devIndicator.innerHTML = `DEVMODE <span style="color: ${isWinnable ? '#10b981' : '#ef4444'}">● ${isWinnable ? 'WIN SEED' : 'LOSE SEED'}</span> <span style="color:#52525b">#${currentSeed}</span>`;
+}
+
 // --- DEV TOOLS (Obfuscated) ---
 function _cSeq(n) {
     _dm = true; 
@@ -423,7 +499,13 @@ window.addEventListener('keydown', (e) => {
         if (_inputLog.length > 20) _inputLog = _inputLog.substring(_inputLog.length - 20);
 
         // Obfuscated Check: wingame (d2luZ2FtZQ==)
-        if (_inputLog.endsWith(atob("d2luZ2FtZQ=="))) {
+        if (_inputLog.endsWith('chancewin')) {
+            _dm = !_dm; // toggle devmode
+            devIndicator.classList.toggle('visible', _dm);
+            if (_dm) updateDevIndicator();
+            _inputLog = "";
+        }
+        else if (_inputLog.endsWith(atob("d2luZ2FtZQ=="))) {
             _dm = true;
             if (mainMenu.style.display !== 'none') startGame('medium');
             slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });

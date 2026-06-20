@@ -356,7 +356,18 @@ body.state-dead #reset-btn {
 
 /* --- CONFETTI --- */
 #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; transition: opacity 1s ease; }
-.dev-indicator { position: fixed; top: 20px; right: 20px; opacity: 0; color: #fff; font-family: monospace; }
+.dev-indicator { 
+    position: fixed; top: 20px; right: 20px; 
+    opacity: 0; color: #fff; font-family: monospace;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 .dev-indicator.visible { opacity: 1; }
 
 /* --- ANIMATIONS (Shakes & Pressure) --- */
