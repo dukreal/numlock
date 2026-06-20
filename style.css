@@ -154,7 +154,7 @@ button {
     font-family: inherit; transition: all 0.3s ease;
 }
 
-#roll-btn { background: var(--accent-primary); color: var(--accent-bg); margin-top: 20px; width: 100%; max-width: 200px; }
+#roll-btn { background: var(--accent-primary); color: var(--accent-bg); margin-top: 20px; width: 200px; min-width: 200px; }
 #roll-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-2px); }
 #roll-btn:disabled { background: var(--border-subtle); color: var(--text-muted); cursor: not-allowed; transform: none; }
 
