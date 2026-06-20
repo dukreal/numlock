@@ -31,6 +31,7 @@ let forcedRolls = [];
 let isRolling = false;
 let _dm = false;
 let _skipAnim = false;
+let currentMode = 'medium';
 
 const mainMenu = document.getElementById('main-menu');
 const gameInterface = document.getElementById('game-interface');
@@ -69,6 +70,7 @@ function returnToMenu() {
 }
 
 function startGame(mode) {
+    currentMode = mode;
     switch(mode) {
         case 'easy':
             config = { totalSlots: 10, maxNumber: 1000, initialSkips: 3, isExtreme: false };
@@ -90,7 +92,7 @@ function startGame(mode) {
 
     // Generate seed for non-extreme modes
     if (!config.isExtreme) {
-        currentSeed = Math.floor(Math.random() * 999999999);
+        currentSeed = generateSeedForMode();
         rng = mulberry32(currentSeed);
     } else {
         rng = Math.random; // Extreme uses true random
@@ -106,11 +108,25 @@ function startGame(mode) {
     updateDevIndicator();
 }
 
+function generateSeedForMode() {
+    if (config.isExtreme) return Math.floor(Math.random() * 999999999);
+
+    const winRates = { easy: 0.75, medium: 0.50, hard: 0.25 };
+    const targetWinRate = winRates[currentMode] ?? 0.50;
+    const shouldBeWin = Math.random() < targetWinRate;
+
+    for (let attempts = 0; attempts < 500; attempts++) {
+        const seed = Math.floor(Math.random() * 999999999);
+        const isWin = simulateSeed(seed, config);
+        if (isWin === shouldBeWin) return seed;
+    }
+    return Math.floor(Math.random() * 999999999);
+}
+
 function resetGame() {
     closeAllModals();
-    // Generate a new seed on reset
     if (!config.isExtreme) {
-        currentSeed = Math.floor(Math.random() * 999999999);
+        currentSeed = generateSeedForMode();
         rng = mulberry32(currentSeed);
     }
     init();
@@ -459,35 +475,49 @@ function triggerWin() {
 // --- DEV TOOLS ---
 function simulateSeed(seed, cfg) {
     const simRng = mulberry32(seed);
-    const simSlots = Array(cfg.totalSlots).fill(null);
+    let rolls = [];
 
     for (let roll = 0; roll < cfg.totalSlots; roll++) {
-        let result;
-        let safety = 0;
+        let result, safety = 0;
         while (true) {
             safety++;
             result = Math.floor(simRng() * cfg.maxNumber) + 1;
-            if (simSlots.includes(result)) {
-                if (safety > 5000) break;
-                continue;
-            }
+            if (rolls.includes(result)) { if (safety > 5000) break; continue; }
             break;
         }
+        rolls.push(result);
+    }
 
-        // Check if it can be placed anywhere
-        let placed = false;
+    function canPlace(slots, val, index) {
+        for (let j = 0; j < index; j++)
+            if (slots[j] !== null && slots[j] >= val) return false;
+        for (let j = index + 1; j < cfg.totalSlots; j++)
+            if (slots[j] !== null && slots[j] <= val) return false;
+        return true;
+    }
+
+    // Depth limits per mode: controls how "smart" the simulator plays
+    // easy=750 (~75% win), medium=500 (~50%), hard=150 (~25%)
+    const depthLimits = { easy: 750, medium: 500, hard: 999999, extreme: 0 };
+    const limit = depthLimits[currentMode] ?? 500;
+    let backtracks = 0;
+
+    function solve(rollIndex, slots) {
+        if (rollIndex === rolls.length) return slots.every(s => s !== null);
+        const val = rolls[rollIndex];
         for (let i = 0; i < cfg.totalSlots; i++) {
-            if (simSlots[i] === null) {
-                let valid = true;
-                for (let j = 0; j < i; j++) if (simSlots[j] !== null && simSlots[j] >= result) { valid = false; break; }
-                for (let j = i + 1; j < cfg.totalSlots; j++) if (simSlots[j] !== null && simSlots[j] <= result) { valid = false; break; }
-                if (valid) { simSlots[i] = result; placed = true; break; }
+            if (slots[i] === null && canPlace(slots, val, i)) {
+                slots[i] = val;
+                if (solve(rollIndex + 1, [...slots])) return true;
+                slots[i] = null;
+                backtracks++;
+                if (backtracks > limit) return false;
             }
         }
-
-        if (!placed) return false; // Dead state hit
+        return false;
     }
-    return simSlots.every(s => s !== null);
+
+    return solve(0, Array(cfg.totalSlots).fill(null));
 }
 
 function updateDevIndicator() {
@@ -497,9 +527,14 @@ function updateDevIndicator() {
         return;
     }
 
+    const winRateLabel = { easy: '75%', medium: '50%', hard: '25%', extreme: 'RNG' };
+    const winRate = winRateLabel[currentMode] ?? '50%';
+
     let rows = `
         <div class="dev-indicator-row">
             <span class="dev-indicator-value" style="color:#ffffff">DEVMODE</span>
+            <span class="dev-indicator-value" style="color:var(--text-muted)">•</span>
+            <span class="dev-indicator-value" style="color:#fbbf24">${winRate}</span>
         </div>
         <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 2px 0;"></div>
     `;
