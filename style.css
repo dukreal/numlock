@@ -28,8 +28,9 @@ body {
     background-color: var(--bg-body);
     color: var(--text-main);
     margin: 0;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
     transition: background-color 0.8s ease, color 0.5s ease;
 }
 
@@ -368,7 +369,22 @@ body.pressure-9 { --bg-body: #4c0519; --bg-card: #831843; --accent-primary: #fda
 .shake-lvl-3 { animation: shake-3 0.15s infinite; color: var(--error) !important; } /* Hard/Violent */
 
 @media (max-width: 500px) {
-    .slots-grid { grid-template-columns: repeat(2, 1fr); }
-    .slots-grid.large-grid { grid-template-columns: repeat(4, 1fr); }
-    .number-display { font-size: 4rem; }
+    .game-wrapper {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        padding: 20px 16px 40px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .slots-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .slots-grid.large-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .number-display { font-size: 3.5rem; }
+    .menu-title { font-size: 2.2rem; }
+    footer { margin-top: 20px; }
+    header { margin-bottom: 16px; }
+    .roll-stage { margin-bottom: 16px; }
 }
