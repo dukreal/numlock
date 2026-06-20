@@ -657,11 +657,6 @@ function getSmartLoseRoll(cfg) {
     const filledCount = slots.filter(s => s !== null).length;
     const totalSlots = cfg.totalSlots;
 
-    // How far into the game are we? 0.0 = start, 1.0 = end
-    const progress = filledCount / totalSlots;
-
-    // Decide kill position: random between 30% and 90% through the game
-    // Store it once per game so it doesn't keep changing
     if (typeof getSmartLoseRoll._killAt === 'undefined' || getSmartLoseRoll._killAt === null) {
         const earliest = Math.floor(totalSlots * 0.3);
         const latest = Math.floor(totalSlots * 0.9);
@@ -670,14 +665,15 @@ function getSmartLoseRoll(cfg) {
 
     const killAt = getSmartLoseRoll._killAt;
 
-    // Build gap info — for each empty slot, what range of numbers can go there
     function getSlotRange(i) {
         let lo = 0, hi = cfg.maxNumber + 1;
-        // Use IMMEDIATE neighbors only
         for (let j = i - 1; j >= 0; j--) { if (slots[j] !== null) { lo = slots[j]; break; } }
         for (let j = i + 1; j < cfg.totalSlots; j++) { if (slots[j] !== null) { hi = slots[j]; break; } }
         return { lo, hi, range: hi - lo - 1 };
     }
+
+    // Get last placed number to avoid consecutive close values
+    const lastPlaced = slots.filter(s => s !== null).slice(-1)[0] ?? null;
 
     const emptySlots = [];
     for (let i = 0; i < cfg.totalSlots; i++) {
@@ -689,70 +685,65 @@ function getSmartLoseRoll(cfg) {
 
     if (emptySlots.length === 0) return null;
 
-    // BEFORE kill point: generate numbers that squeeze the board
-    // Strategy: pick numbers that fill slots near boundaries, 
-    // reducing the range available for future rolls
-    if (filledCount < killAt) {
-        // Pick the slot with the SMALLEST range — this forces numbers into tight gaps
-        // making future rolls more likely to fail
-        emptySlots.sort((a, b) => a.range - b.range);
-        const target = emptySlots[0];
-
-        // Pick a number near the boundary of that slot to maximize squeezing
-        const lo = target.lo + 1;
-        const hi = target.hi - 1;
-
-        // Alternate between picking near the lo and hi boundaries
-        // to fragment the remaining number space
-        let candidate;
-        if (Math.random() < 0.5) {
-            // Pick near the low boundary — squeezes the gap from below
-            candidate = lo + Math.floor(Math.random() * Math.max(1, Math.floor((hi - lo) * 0.25)));
-        } else {
-            // Pick near the high boundary — squeezes the gap from above  
-            candidate = hi - Math.floor(Math.random() * Math.max(1, Math.floor((hi - lo) * 0.25)));
+    // AT/AFTER kill point: generate impossible number
+    if (filledCount >= killAt) {
+        for (let attempts = 0; attempts < 500; attempts++) {
+            const candidate = Math.floor(Math.random() * cfg.maxNumber) + 1;
+            if (used.has(candidate)) continue;
+            let anyValid = false;
+            for (let i = 0; i < cfg.totalSlots; i++) {
+                if (slots[i] !== null) continue;
+                const { lo, hi } = getSlotRange(i);
+                if (candidate > lo && candidate < hi) { anyValid = true; break; }
+            }
+            if (!anyValid) return candidate;
         }
+        // Fallback squeeze if kill not found
+    }
 
+    // BEFORE kill point: pick a slot randomly weighted by range
+    // Bigger range = more likely to be picked (feels natural)
+    // But exclude ranges that are TOO small (avoids clustering in tight gaps)
+    const MIN_RANGE = Math.floor(cfg.maxNumber * 0.05); // at least 5% of max range
+    const validSlots = emptySlots.filter(s => s.range >= MIN_RANGE);
+    const pool = validSlots.length > 0 ? validSlots : emptySlots;
+
+    // Weighted random: pick proportional to range size so wide gaps feel natural
+    const totalRange = pool.reduce((sum, s) => sum + s.range, 0);
+    let rand = Math.random() * totalRange;
+    let target = pool[0];
+    for (const s of pool) {
+        rand -= s.range;
+        if (rand <= 0) { target = s; break; }
+    }
+
+    const lo = target.lo + 1;
+    const hi = target.hi - 1;
+
+    // Generate candidate — avoid being too close to lastPlaced
+    let candidate;
+    const MIN_DISTANCE = Math.floor(cfg.maxNumber * 0.05); // at least 5% apart from last
+    let attempts = 0;
+    do {
+        // Pick from middle 60% of the range to avoid always hugging boundaries
+        const rangeSize = hi - lo + 1;
+        const innerLo = lo + Math.floor(rangeSize * 0.2);
+        const innerHi = hi - Math.floor(rangeSize * 0.2);
+        candidate = innerLo + Math.floor(Math.random() * (innerHi - innerLo + 1));
         candidate = Math.max(lo, Math.min(hi, candidate));
+        attempts++;
+        // Accept if not used and not too close to last placed number
+        const tooClose = lastPlaced !== null && Math.abs(candidate - lastPlaced) < MIN_DISTANCE;
+        if (!used.has(candidate) && !tooClose) break;
+    } while (attempts < 300);
 
-        // Avoid duplicates
-        let attempts = 0;
+    // Final fallback: just any valid number in range
+    if (used.has(candidate)) {
+        attempts = 0;
         while (used.has(candidate) && attempts < 200) {
             candidate = lo + Math.floor(Math.random() * (hi - lo + 1));
             attempts++;
         }
-
-        return used.has(candidate) ? null : candidate;
-    }
-
-    // AT/AFTER kill point: generate a number with NO valid slot
-    // Try to find a number that cannot be placed anywhere
-    for (let attempts = 0; attempts < 500; attempts++) {
-        const candidate = Math.floor(Math.random() * cfg.maxNumber) + 1;
-        if (used.has(candidate)) continue;
-
-        let anyValid = false;
-        for (let i = 0; i < cfg.totalSlots; i++) {
-            if (slots[i] !== null) continue;
-            const { lo, hi } = getSlotRange(i);
-            if (candidate > lo && candidate < hi) { anyValid = true; break; }
-        }
-
-        if (!anyValid) return candidate; // guaranteed dead
-    }
-
-    // Fallback: couldn't find a kill number, squeeze instead
-    // This means the board still has wide open gaps — keep squeezing
-    emptySlots.sort((a, b) => a.range - b.range);
-    const target = emptySlots[0];
-    const lo = target.lo + 1;
-    const hi = target.hi - 1;
-    let candidate = lo + Math.floor(Math.random() * (hi - lo + 1));
-
-    let attempts = 0;
-    while (used.has(candidate) && attempts < 200) {
-        candidate = lo + Math.floor(Math.random() * (hi - lo + 1));
-        attempts++;
     }
 
     return used.has(candidate) ? null : candidate;
