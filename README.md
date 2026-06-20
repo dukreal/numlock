@@ -1,0 +1,1 @@
+> **NumLock** is a browser-based logic game where players must place randomly rolled numbers into fixed slots while maintaining a **strictly increasing order**. Once a number is placed, it is **locked forever** — one mistake ends the run.
