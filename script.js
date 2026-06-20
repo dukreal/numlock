@@ -483,37 +483,41 @@ function getSmartWinRoll(cfg) {
     const emptyCount = slots.filter(s => s === null).length;
     if (emptyCount === 0) return null;
 
-    // Find the valid range for each empty slot
-    // For each empty slot, find lo (max of filled slots to its left) 
-    // and hi (min of filled slots to its right)
+    // For each empty slot, find IMMEDIATE neighbors (closest filled left and right)
+    // not just any filled slot on that side
     const emptySlots = [];
     for (let i = 0; i < cfg.totalSlots; i++) {
         if (slots[i] !== null) continue;
+
+        // Find closest filled slot to the LEFT
         let lo = 0;
+        for (let j = i - 1; j >= 0; j--) {
+            if (slots[j] !== null) { lo = slots[j]; break; }
+        }
+        // Find closest filled slot to the RIGHT
         let hi = cfg.maxNumber + 1;
-        for (let j = 0; j < i; j++) if (slots[j] !== null && slots[j] > lo) lo = slots[j];
-        for (let j = i + 1; j < cfg.totalSlots; j++) if (slots[j] !== null && slots[j] < hi) hi = slots[j];
-        const available = hi - lo - 1; // numbers available in this slot's range
+        for (let j = i + 1; j < cfg.totalSlots; j++) {
+            if (slots[j] !== null) { hi = slots[j]; break; }
+        }
+
+        const available = hi - lo - 1;
         if (available > 0) emptySlots.push({ i, lo, hi, available });
     }
 
     if (emptySlots.length === 0) return null;
 
-    // Pick the slot with the largest available range (most room)
+    // Pick the slot with the largest available range
     emptySlots.sort((a, b) => b.available - a.available);
     const target = emptySlots[0];
 
-    // Generate a number in the middle of that slot's range
     const lo = target.lo + 1;
     const hi = target.hi - 1;
     const mid = Math.floor((lo + hi) / 2);
 
-    // Small random spread so it doesn't always feel perfectly centered
     const spread = Math.max(1, Math.floor((hi - lo) * 0.15));
     let candidate = mid + Math.floor(Math.random() * spread * 2) - spread;
     candidate = Math.max(lo, Math.min(hi, candidate));
 
-    // Avoid duplicates
     let attempts = 0;
     while (used.has(candidate) && attempts < 200) {
         candidate = lo + Math.floor(Math.random() * (hi - lo + 1));
@@ -669,8 +673,9 @@ function getSmartLoseRoll(cfg) {
     // Build gap info — for each empty slot, what range of numbers can go there
     function getSlotRange(i) {
         let lo = 0, hi = cfg.maxNumber + 1;
-        for (let j = 0; j < i; j++) if (slots[j] !== null && slots[j] > lo) lo = slots[j];
-        for (let j = i + 1; j < cfg.totalSlots; j++) if (slots[j] !== null && slots[j] < hi) hi = slots[j];
+        // Use IMMEDIATE neighbors only
+        for (let j = i - 1; j >= 0; j--) { if (slots[j] !== null) { lo = slots[j]; break; } }
+        for (let j = i + 1; j < cfg.totalSlots; j++) { if (slots[j] !== null) { hi = slots[j]; break; } }
         return { lo, hi, range: hi - lo - 1 };
     }
 
