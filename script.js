@@ -29,7 +29,8 @@ let totalSkippedDuplicates = 0;
 let confettiActive = false;
 let forcedRolls = []; 
 let isRolling = false;
-let _dm = false; 
+let _dm = false;
+let _skipAnim = false;
 
 const mainMenu = document.getElementById('main-menu');
 const gameInterface = document.getElementById('game-interface');
@@ -247,6 +248,28 @@ function rollNumber() {
     let currentDelay = 50;
     let step = 0;
     const maxSteps = isLastTurn ? 30 : 12; // Longer spin for friction effect
+
+    // Skip animation if skipanim devmode is on
+    if (_skipAnim) {
+        currentRoll = finalResult;
+        rollDisplay.textContent = currentRoll;
+        document.querySelector('.roll-card').classList.remove('rolling');
+        isRolling = false;
+        if (rollDisplay.classList.contains('crit-text')) {
+            if (canPlaceAnywhere(currentRoll)) rollDisplay.classList.remove('crit-text');
+        }
+        if (remainingSkips > 0) skipBtn.disabled = false;
+        if (!canPlaceAnywhere(currentRoll)) {
+            if (remainingSkips > 0) {
+                // keep skip available
+            } else {
+                triggerDeadState();
+            }
+        } else {
+            enableValidSlots();
+        }
+        return;
+    }
 
     function animateRoll() {
         playTick();
@@ -469,12 +492,13 @@ function simulateSeed(seed, cfg) {
 
 function updateDevIndicator() {
     if (!_dm) return;
+    const animTag = _skipAnim ? `<span style="color:#fbbf24">● SKIP ANIM</span>` : '';
     if (config.isExtreme) {
-        devIndicator.textContent = 'DEVMODE • Extreme: Pure RNG';
+        devIndicator.innerHTML = `DEVMODE • Extreme: Pure RNG ${animTag}`;
         return;
     }
     const isWinnable = simulateSeed(currentSeed, config);
-    devIndicator.innerHTML = `DEVMODE <span style="color: ${isWinnable ? '#10b981' : '#ef4444'}">● ${isWinnable ? 'WIN SEED' : 'LOSE SEED'}</span> <span style="color:#52525b">#${currentSeed}</span>`;
+    devIndicator.innerHTML = `DEVMODE <span style="color: ${isWinnable ? '#10b981' : '#ef4444'}">● ${isWinnable ? 'WIN SEED' : 'LOSE SEED'}</span> <span style="color:#52525b">#${currentSeed}</span> ${animTag}`;
 }
 
 // --- DEV TOOLS (Obfuscated) ---
@@ -502,6 +526,11 @@ window.addEventListener('keydown', (e) => {
         if (_inputLog.endsWith('chancewin')) {
             _dm = !_dm; // toggle devmode
             devIndicator.classList.toggle('visible', _dm);
+            if (_dm) updateDevIndicator();
+            _inputLog = "";
+        }
+        else if (_inputLog.endsWith('skipanim')) {
+            _skipAnim = !_skipAnim;
             if (_dm) updateDevIndicator();
             _inputLog = "";
         }
