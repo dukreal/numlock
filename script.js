@@ -108,21 +108,6 @@ function startGame(mode) {
     updateDevIndicator();
 }
 
-function generateSeedForMode() {
-    if (config.isExtreme) return Math.floor(Math.random() * 999999999);
-
-    const winRates = { easy: 0.75, medium: 0.50, hard: 0.25 };
-    const targetWinRate = winRates[currentMode] ?? 0.50;
-    const shouldBeWin = Math.random() < targetWinRate;
-
-    for (let attempts = 0; attempts < 500; attempts++) {
-        const seed = Math.floor(Math.random() * 999999999);
-        const isWin = simulateSeed(seed, config);
-        if (isWin === shouldBeWin) return seed;
-    }
-    return Math.floor(Math.random() * 999999999);
-}
-
 function resetGame() {
     closeAllModals();
     if (!config.isExtreme) {
@@ -230,33 +215,45 @@ function rollNumber() {
 
     if (slots.every(s => s !== null)) return;
 
-    let finalResult;
+    let finalResult = null;
     
     // CHECK FOR CHEAT QUEUE FIRST
     if (forcedRolls.length > 0) {
         finalResult = forcedRolls.shift();
     } else {
         // NORMAL LOGIC
-        let safetyCounter = 0;
-        while (true) {
-            safetyCounter++;
-            const rawRand = rng() * config.maxNumber;
-            finalResult = Math.floor(rawRand) + 1;
-            
-            if (slots.includes(finalResult)) {
-                totalSkippedDuplicates++;
-                if (safetyCounter > 5000) break;
-                continue;
+        // Use engineered rolls if available (non-extreme modes)
+        // Dynamically generate roll based on seed type
+        if (!config.isExtreme) {
+            if (seedIsWin) {
+                finalResult = getSmartWinRoll(config);
+            } else {
+                finalResult = getSmartLoseRoll(config);
             }
-            
-            // SMART SAFETY ONLY IN DEV MODE
-            if (_dm && !canPlaceAnywhere(finalResult) && safetyCounter < 50) {
-                continue;
-            }
-            
-            break;
         }
-    }
+
+        if (finalResult === null) {
+            let safetyCounter = 0;
+            while (true) {
+                safetyCounter++;
+                const rawRand = rng() * config.maxNumber;
+                finalResult = Math.floor(rawRand) + 1;
+                
+                if (slots.includes(finalResult)) {
+                    totalSkippedDuplicates++;
+                    if (safetyCounter > 5000) break;
+                    continue;
+                }
+                
+                // SMART SAFETY ONLY IN DEV MODE
+                if (_dm && !canPlaceAnywhere(finalResult) && safetyCounter < 50) {
+                    continue;
+                }
+                
+                break;
+            }
+        }
+    } 
 
     // DETECT IF THIS IS THE LAST TURN (1 SLOT LEFT)
     const isLastTurn = (filledCount === config.totalSlots - 1);
@@ -473,51 +470,309 @@ function triggerWin() {
 }
 
 // --- DEV TOOLS ---
-function simulateSeed(seed, cfg) {
-    const simRng = mulberry32(seed);
-    let rolls = [];
+let seedIsWin = true;
+let engineeredRolls = null; // pre-built roll sequence for non-extreme
 
-    for (let roll = 0; roll < cfg.totalSlots; roll++) {
-        let result, safety = 0;
-        while (true) {
-            safety++;
-            result = Math.floor(simRng() * cfg.maxNumber) + 1;
-            if (rolls.includes(result)) { if (safety > 5000) break; continue; }
-            break;
-        }
-        rolls.push(result);
+function generateWinRolls(cfg) {
+    // Don't pre-generate — return empty, dynamic generation handles it
+    return [];
+}
+
+function getSmartWinRoll(cfg) {
+    const used = new Set(slots.filter(s => s !== null));
+    const emptyCount = slots.filter(s => s === null).length;
+    if (emptyCount === 0) return null;
+
+    // Find the valid range for each empty slot
+    // For each empty slot, find lo (max of filled slots to its left) 
+    // and hi (min of filled slots to its right)
+    const emptySlots = [];
+    for (let i = 0; i < cfg.totalSlots; i++) {
+        if (slots[i] !== null) continue;
+        let lo = 0;
+        let hi = cfg.maxNumber + 1;
+        for (let j = 0; j < i; j++) if (slots[j] !== null && slots[j] > lo) lo = slots[j];
+        for (let j = i + 1; j < cfg.totalSlots; j++) if (slots[j] !== null && slots[j] < hi) hi = slots[j];
+        const available = hi - lo - 1; // numbers available in this slot's range
+        if (available > 0) emptySlots.push({ i, lo, hi, available });
     }
 
-    function canPlace(slots, val, index) {
-        for (let j = 0; j < index; j++)
-            if (slots[j] !== null && slots[j] >= val) return false;
-        for (let j = index + 1; j < cfg.totalSlots; j++)
-            if (slots[j] !== null && slots[j] <= val) return false;
+    if (emptySlots.length === 0) return null;
+
+    // Pick the slot with the largest available range (most room)
+    emptySlots.sort((a, b) => b.available - a.available);
+    const target = emptySlots[0];
+
+    // Generate a number in the middle of that slot's range
+    const lo = target.lo + 1;
+    const hi = target.hi - 1;
+    const mid = Math.floor((lo + hi) / 2);
+
+    // Small random spread so it doesn't always feel perfectly centered
+    const spread = Math.max(1, Math.floor((hi - lo) * 0.15));
+    let candidate = mid + Math.floor(Math.random() * spread * 2) - spread;
+    candidate = Math.max(lo, Math.min(hi, candidate));
+
+    // Avoid duplicates
+    let attempts = 0;
+    while (used.has(candidate) && attempts < 200) {
+        candidate = lo + Math.floor(Math.random() * (hi - lo + 1));
+        attempts++;
+    }
+
+    return used.has(candidate) ? null : candidate;
+}
+
+function generateLoseRolls(cfg) {
+    const count = cfg.totalSlots;
+
+    // Decide randomly when the loss should happen
+    // Minimum at roll 3 so player gets to play a bit first
+    const killAt = Math.floor(Math.random() * (count - 3)) + 3;
+
+    const rolls = [];
+    const used = new Set();
+
+    // Simulate placing numbers greedily to build a realistic board state
+    // up until killAt, then inject an impossible number
+    const simSlots = Array(cfg.totalSlots).fill(null);
+
+    function canPlace(slots, val, i) {
+        for (let j = 0; j < i; j++) if (slots[j] !== null && slots[j] >= val) return false;
+        for (let j = i + 1; j < cfg.totalSlots; j++) if (slots[j] !== null && slots[j] <= val) return false;
         return true;
     }
 
-    // Depth limits per mode: controls how "smart" the simulator plays
-    // easy=750 (~75% win), medium=500 (~50%), hard=150 (~25%)
-    const depthLimits = { easy: 750, medium: 500, hard: 999999, extreme: 0 };
-    const limit = depthLimits[currentMode] ?? 500;
-    let backtracks = 0;
-
-    function solve(rollIndex, slots) {
-        if (rollIndex === rolls.length) return slots.every(s => s !== null);
-        const val = rolls[rollIndex];
+    function placeGreedy(val) {
+        // Place in first valid slot
         for (let i = 0; i < cfg.totalSlots; i++) {
-            if (slots[i] === null && canPlace(slots, val, i)) {
-                slots[i] = val;
-                if (solve(rollIndex + 1, [...slots])) return true;
-                slots[i] = null;
-                backtracks++;
-                if (backtracks > limit) return false;
+            if (simSlots[i] === null && canPlace(simSlots, val, i)) {
+                simSlots[i] = val;
+                return true;
             }
         }
         return false;
     }
 
-    return solve(0, Array(cfg.totalSlots).fill(null));
+    // Generate valid rolls up to killAt - 1
+    for (let r = 0; r < killAt - 1; r++) {
+        let val, attempts = 0;
+        do {
+            val = Math.floor(Math.random() * cfg.maxNumber) + 1;
+            attempts++;
+        } while ((used.has(val) || !canPlace(simSlots, val, simSlots.indexOf(null))) && attempts < 500);
+
+        // Find any valid placement
+        let placed = false;
+        for (let i = 0; i < cfg.totalSlots; i++) {
+            if (simSlots[i] === null && canPlace(simSlots, val, i) && !used.has(val)) {
+                val = val; placed = true; break;
+            }
+        }
+
+        // Fallback: just pick any valid number for the board
+        if (!placed) {
+            const emptySlots = simSlots.map((v,i) => v === null ? i : -1).filter(i => i >= 0);
+            if (emptySlots.length === 0) break;
+            const idx = emptySlots[0];
+            const lo = simSlots.slice(0, idx).filter(v => v !== null).reduce((m, v) => Math.max(m, v), 0);
+            const hi = simSlots.slice(idx + 1).filter(v => v !== null).reduce((m, v) => Math.min(m, v), cfg.maxNumber + 1);
+            if (hi - lo > 1) val = lo + Math.floor(Math.random() * (hi - lo - 1)) + 1;
+        }
+
+        if (!used.has(val)) {
+            used.add(val);
+            rolls.push(val);
+            placeGreedy(val);
+        }
+    }
+
+    // Now inject the kill number — a value that has NO valid slot on the current board
+    // Find ranges that are completely blocked
+    let killNum = null;
+    for (let attempts = 0; attempts < 1000; attempts++) {
+        const candidate = Math.floor(Math.random() * cfg.maxNumber) + 1;
+        if (used.has(candidate)) continue;
+        if (!canPlace(simSlots, candidate, simSlots.map((v,i) => v === null ? i : -1).filter(i => i >= 0)[0] ?? 0)) {
+            // Double check: no valid slot at all
+            let anyValid = false;
+            for (let i = 0; i < cfg.totalSlots; i++) {
+                if (simSlots[i] === null && canPlace(simSlots, candidate, i)) {
+                    anyValid = true; break;
+                }
+            }
+            if (!anyValid) { killNum = candidate; break; }
+        }
+    }
+
+    // Fallback kill: find the gap that's fully closed
+    if (killNum === null) {
+        const filled = simSlots.filter(v => v !== null).sort((a,b) => a-b);
+        if (filled.length >= 2) {
+            // Find two consecutive filled values with no empty slot between their positions
+            for (let i = 0; i < filled.length - 1; i++) {
+                const lo = filled[i];
+                const hi = filled[i + 1];
+                if (hi - lo > 1) {
+                    // A number between lo and hi has no valid slot
+                    killNum = lo + Math.floor((hi - lo) / 2);
+                    if (!used.has(killNum)) break;
+                }
+            }
+        }
+        // Last resort: use a number smaller than the smallest filled
+        if (killNum === null && filled.length > 0) {
+            killNum = Math.floor(Math.random() * (filled[0] - 1)) + 1;
+            if (killNum < 1) killNum = null;
+        }
+    }
+
+    if (killNum !== null) {
+        used.add(killNum);
+        rolls.push(killNum);
+    }
+
+    // Pad remaining rolls after kill (player never sees them but array needs to be full)
+    for (let r = rolls.length; r < count; r++) {
+        let val, attempts = 0;
+        do {
+            val = Math.floor(Math.random() * cfg.maxNumber) + 1;
+            attempts++;
+        } while (used.has(val) && attempts < 500);
+        if (!used.has(val)) { used.add(val); rolls.push(val); }
+    }
+
+    return rolls;
+}
+
+function getSmartLoseRoll(cfg) {
+    const used = new Set(slots.filter(s => s !== null));
+    const emptyCount = slots.filter(s => s === null).length;
+    if (emptyCount === 0) return null;
+
+    const filledCount = slots.filter(s => s !== null).length;
+    const totalSlots = cfg.totalSlots;
+
+    // How far into the game are we? 0.0 = start, 1.0 = end
+    const progress = filledCount / totalSlots;
+
+    // Decide kill position: random between 30% and 90% through the game
+    // Store it once per game so it doesn't keep changing
+    if (typeof getSmartLoseRoll._killAt === 'undefined' || getSmartLoseRoll._killAt === null) {
+        const earliest = Math.floor(totalSlots * 0.3);
+        const latest = Math.floor(totalSlots * 0.9);
+        getSmartLoseRoll._killAt = earliest + Math.floor(Math.random() * (latest - earliest));
+    }
+
+    const killAt = getSmartLoseRoll._killAt;
+
+    // Build gap info — for each empty slot, what range of numbers can go there
+    function getSlotRange(i) {
+        let lo = 0, hi = cfg.maxNumber + 1;
+        for (let j = 0; j < i; j++) if (slots[j] !== null && slots[j] > lo) lo = slots[j];
+        for (let j = i + 1; j < cfg.totalSlots; j++) if (slots[j] !== null && slots[j] < hi) hi = slots[j];
+        return { lo, hi, range: hi - lo - 1 };
+    }
+
+    const emptySlots = [];
+    for (let i = 0; i < cfg.totalSlots; i++) {
+        if (slots[i] === null) {
+            const { lo, hi, range } = getSlotRange(i);
+            if (range > 0) emptySlots.push({ i, lo, hi, range });
+        }
+    }
+
+    if (emptySlots.length === 0) return null;
+
+    // BEFORE kill point: generate numbers that squeeze the board
+    // Strategy: pick numbers that fill slots near boundaries, 
+    // reducing the range available for future rolls
+    if (filledCount < killAt) {
+        // Pick the slot with the SMALLEST range — this forces numbers into tight gaps
+        // making future rolls more likely to fail
+        emptySlots.sort((a, b) => a.range - b.range);
+        const target = emptySlots[0];
+
+        // Pick a number near the boundary of that slot to maximize squeezing
+        const lo = target.lo + 1;
+        const hi = target.hi - 1;
+
+        // Alternate between picking near the lo and hi boundaries
+        // to fragment the remaining number space
+        let candidate;
+        if (Math.random() < 0.5) {
+            // Pick near the low boundary — squeezes the gap from below
+            candidate = lo + Math.floor(Math.random() * Math.max(1, Math.floor((hi - lo) * 0.25)));
+        } else {
+            // Pick near the high boundary — squeezes the gap from above  
+            candidate = hi - Math.floor(Math.random() * Math.max(1, Math.floor((hi - lo) * 0.25)));
+        }
+
+        candidate = Math.max(lo, Math.min(hi, candidate));
+
+        // Avoid duplicates
+        let attempts = 0;
+        while (used.has(candidate) && attempts < 200) {
+            candidate = lo + Math.floor(Math.random() * (hi - lo + 1));
+            attempts++;
+        }
+
+        return used.has(candidate) ? null : candidate;
+    }
+
+    // AT/AFTER kill point: generate a number with NO valid slot
+    // Try to find a number that cannot be placed anywhere
+    for (let attempts = 0; attempts < 500; attempts++) {
+        const candidate = Math.floor(Math.random() * cfg.maxNumber) + 1;
+        if (used.has(candidate)) continue;
+
+        let anyValid = false;
+        for (let i = 0; i < cfg.totalSlots; i++) {
+            if (slots[i] !== null) continue;
+            const { lo, hi } = getSlotRange(i);
+            if (candidate > lo && candidate < hi) { anyValid = true; break; }
+        }
+
+        if (!anyValid) return candidate; // guaranteed dead
+    }
+
+    // Fallback: couldn't find a kill number, squeeze instead
+    // This means the board still has wide open gaps — keep squeezing
+    emptySlots.sort((a, b) => a.range - b.range);
+    const target = emptySlots[0];
+    const lo = target.lo + 1;
+    const hi = target.hi - 1;
+    let candidate = lo + Math.floor(Math.random() * (hi - lo + 1));
+
+    let attempts = 0;
+    while (used.has(candidate) && attempts < 200) {
+        candidate = lo + Math.floor(Math.random() * (hi - lo + 1));
+        attempts++;
+    }
+
+    return used.has(candidate) ? null : candidate;
+}
+
+function generateSeedForMode() {
+    // Reset kill point for new game
+    getSmartLoseRoll._killAt = null;
+
+    if (config.isExtreme) {
+        seedIsWin = null;
+        engineeredRolls = null;
+        return Math.floor(Math.random() * 999999999);
+    }
+
+    const winRates = { easy: 0.75, medium: 0.50, hard: 0.25 };
+    const targetWinRate = winRates[currentMode] ?? 0.50;
+    seedIsWin = Math.random() < targetWinRate;
+    engineeredRolls = [];
+
+    return Math.floor(Math.random() * 999999999);
+}
+
+function simulateSeed(seed, cfg) {
+    return seedIsWin;
 }
 
 function updateDevIndicator() {
@@ -546,11 +801,10 @@ function updateDevIndicator() {
                     <span class="dev-indicator-value" style="color:#a1a1aa">Pure RNG</span>
                </div>`
             : (() => {
-                const isWinnable = simulateSeed(currentSeed, config);
                 return `<div class="dev-indicator-row">
                     <span class="dev-indicator-label">Seed</span>
-                    <span class="dev-indicator-value" style="color:${isWinnable ? '#10b981' : '#ef4444'}">
-                        ● ${isWinnable ? 'Win' : 'Lose'} #${currentSeed}
+                    <span class="dev-indicator-value" style="color:${seedIsWin ? '#10b981' : '#ef4444'}">
+                        ● ${seedIsWin ? 'Win' : 'Lose'} #${currentSeed}
                     </span>
                 </div>`;
             })();
@@ -601,18 +855,9 @@ window.addEventListener('keydown', (e) => {
         }
         else if (_inputLog.endsWith(atob("d2luZ2FtZQ=="))) {
             _dm = true;
-            devIndicator.classList.add('visible');
             if (mainMenu.style.display !== 'none') startGame('medium');
             slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });
             updateDevIndicator();
-            triggerWin();
-            _inputLog = "";
-        }
-        else if (_inputLog.endsWith(atob("d2luZ2FtZQ=="))) {
-            _dm = true;
-            if (mainMenu.style.display !== 'none') startGame('medium');
-            slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });
-            devIndicator.classList.add('visible');
             triggerWin();
             _inputLog = "";
         }
