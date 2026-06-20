@@ -201,19 +201,23 @@ footer { margin-top: 40px; }
 
 .slot {
     aspect-ratio: 1/1; background: var(--bg-slot);
-    border: 1px solid var(--border-subtle); border-radius: 8px;
+    border: 2px solid var(--border-subtle); border-radius: 8px;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     cursor: default; pointer-events: none;
     transition: all 0.2s; position: relative;
 }
-.slot-idx { font-size: 0.65rem; color: var(--border-active); position: absolute; top: 6px; left: 8px; }
-.slot-val { font-size: 1.1rem; font-weight: 500; color: var(--text-main); }
+.slot.filled { border-color: #ffffff; }
+.slot-idx { font-size: 0.65rem; color: var(--border-active); font-weight: 600; position: absolute; top: 6px; left: 8px; }
+.slot.filled .slot-idx { color: #ffffff; }
+.slot-val { font-size: 1.1rem; font-weight: 700; color: #ffffff; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
 
 .slot.active-target { 
     cursor: pointer; pointer-events: auto;
-    border-color: var(--text-muted); box-shadow: 0 0 15px -5px rgba(255, 255, 255, 0.15); 
+    border-color: #ffffff;
+    box-shadow: none;
+    animation: pulse-slot 1.2s infinite;
 }
-.slots-grid.first-turn .slot.active-target { border-color: var(--border-subtle); box-shadow: none; }
+.slots-grid.first-turn .slot.active-target { border-color: #ffffff; box-shadow: none; }
 .slot.active-target:hover { border-color: var(--accent-primary); background: var(--bg-card); }
 .slot.filled { background: var(--bg-card); border-color: var(--border-active); }
 
