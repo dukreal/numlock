@@ -491,14 +491,45 @@ function simulateSeed(seed, cfg) {
 }
 
 function updateDevIndicator() {
-    if (!_dm) return;
-    const animTag = _skipAnim ? `<span style="color:#fbbf24">● SKIP ANIM</span>` : '';
-    if (config.isExtreme) {
-        devIndicator.innerHTML = `DEVMODE • Extreme: Pure RNG ${animTag}`;
+    const hasAny = _dm || _skipAnim;
+    if (!hasAny) {
+        devIndicator.classList.remove('visible');
         return;
     }
-    const isWinnable = simulateSeed(currentSeed, config);
-    devIndicator.innerHTML = `DEVMODE <span style="color: ${isWinnable ? '#10b981' : '#ef4444'}">● ${isWinnable ? 'WIN SEED' : 'LOSE SEED'}</span> <span style="color:#52525b">#${currentSeed}</span> ${animTag}`;
+
+    let rows = `
+        <div class="dev-indicator-row">
+            <span class="dev-indicator-value" style="color:#ffffff">DEVMODE</span>
+        </div>
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 2px 0;"></div>
+    `;
+
+    if (_dm) {
+        const seedRow = config.isExtreme
+            ? `<div class="dev-indicator-row">
+                    <span class="dev-indicator-label">Seed</span>
+                    <span class="dev-indicator-value" style="color:#a1a1aa">Pure RNG</span>
+               </div>`
+            : (() => {
+                const isWinnable = simulateSeed(currentSeed, config);
+                return `<div class="dev-indicator-row">
+                    <span class="dev-indicator-label">Seed</span>
+                    <span class="dev-indicator-value" style="color:${isWinnable ? '#10b981' : '#ef4444'}">
+                        ● ${isWinnable ? 'Win' : 'Lose'} #${currentSeed}
+                    </span>
+                </div>`;
+            })();
+        rows += seedRow;
+    }
+
+    if (_skipAnim) {
+        rows += `<div class="dev-indicator-row">
+            <span class="dev-indicator-label">Skip Animation</span>
+        </div>`;
+    }
+
+    devIndicator.innerHTML = rows;
+    devIndicator.classList.add('visible');
 }
 
 // --- DEV TOOLS (Obfuscated) ---
@@ -524,14 +555,22 @@ window.addEventListener('keydown', (e) => {
 
         // Obfuscated Check: wingame (d2luZ2FtZQ==)
         if (_inputLog.endsWith('chancewin')) {
-            _dm = !_dm; // toggle devmode
-            devIndicator.classList.toggle('visible', _dm);
-            if (_dm) updateDevIndicator();
+            _dm = !_dm;
+            updateDevIndicator();
             _inputLog = "";
         }
         else if (_inputLog.endsWith('skipanim')) {
             _skipAnim = !_skipAnim;
-            if (_dm) updateDevIndicator();
+            updateDevIndicator();
+            _inputLog = "";
+        }
+        else if (_inputLog.endsWith(atob("d2luZ2FtZQ=="))) {
+            _dm = true;
+            devIndicator.classList.add('visible');
+            if (mainMenu.style.display !== 'none') startGame('medium');
+            slots.forEach((s, i) => { if(s === null) placeNumber(i, 999); });
+            updateDevIndicator();
+            triggerWin();
             _inputLog = "";
         }
         else if (_inputLog.endsWith(atob("d2luZ2FtZQ=="))) {

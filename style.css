@@ -359,16 +359,21 @@ body.state-dead #reset-btn {
 .dev-indicator { 
     position: fixed; top: 20px; right: 20px; 
     opacity: 0; color: #fff; font-family: monospace;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    padding: 4px 10px;
-    border-radius: 6px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 10px 14px;
+    border-radius: 8px;
     font-size: 0.75rem;
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+    min-width: 160px;
 }
 .dev-indicator.visible { opacity: 1; }
+.dev-indicator-row { display: flex; align-items: center; gap: 8px; }
+.dev-indicator-label { color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.dev-indicator-value { font-size: 0.75rem; font-weight: 600; }
 
 /* --- ANIMATIONS (Shakes & Pressure) --- */
 body.pressure-5 { --bg-body: #1c1917; --bg-card: #292524; }
