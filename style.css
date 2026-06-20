@@ -337,13 +337,16 @@ body.state-dead .slot.filled {
 }
 
 body.state-dead #reset-btn {
+    background: var(--text-main);
+    color: var(--bg-body);
     border-color: var(--text-main);
-    color: var(--text-main);
+    font-weight: 700;
     animation: pulse-reset 2s infinite;
 }
+
 @keyframes pulse-reset {
-    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
-    70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6); }
+    70% { box-shadow: 0 0 0 18px rgba(255, 255, 255, 0); }
     100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
 }
 
