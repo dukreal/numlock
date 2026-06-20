@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NumLock</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+    <!-- Linked CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="confetti-canvas"></canvas>
+    <!-- The indicator is hidden by default -->
+    <div id="dev-indicator" class="dev-indicator">DEVMODE</div>
+
+    <!-- Menu Button (Moved to Top-Left) -->
+    <a id="top-menu-link" class="top-menu-link" onclick="returnToMenu()">← Menu</a>
+
+    <div class="game-wrapper">
+        
+        <!-- MAIN MENU -->
+        <div id="main-menu">
+            <h1 class="menu-title">NumLock</h1>
+            <p class="menu-subtitle">Strategic Sorting</p>
+            <div class="menu-btn-group">
+                <button class="menu-btn" onclick="openModeSelect()">Play</button>
+                <button class="menu-btn" onclick="openAbout()">About</button>
+                <button class="menu-btn" disabled>Settings</button>
+            </div>
+        </div>
+
+        <!-- GAME INTERFACE -->
+        <div id="game-interface">
+            <header>
+                <h1>NumLock</h1>
+                <p id="game-mode-display">Mode: Standard</p>
+            </header>
+
+            <section class="roll-stage">
+                <div class="roll-card">
+                    <div id="current-roll-display" class="number-display">?</div>
+                    <button id="roll-btn">Roll Number</button>
+                    <div id="skip-container">
+                        <button id="skip-btn" class="skip-btn">Skip <span id="skip-count">0</span></button>
+                    </div>
+                </div>
+            </section>
+
+            <main id="slots-grid" class="slots-grid">
+            </main>
+
+            <footer>
+                <button id="reset-btn" class="secondary-btn">Reset Board</button>
+            </footer>
+        </div>
+    </div>
+    
+    <div class="version-tag" style="position: fixed; bottom: 20px; right: 20px; color: #a1a1aa; opacity: 0.5; font-size: 0.7rem; font-family: monospace;">v1.3.20</div>
+
+    <!-- MODE SELECTION MODAL -->
+    <div id="mode-modal" class="overlay">
+        <div class="modal">
+            <h2>Select Difficulty</h2>
+            <div class="mode-list">
+                <button class="mode-btn" onclick="startGame('easy')">
+                    <strong>Easy</strong>
+                    <span>10 Slots • 3 Skips</span>
+                </button>
+                <button class="mode-btn" onclick="startGame('medium')">
+                    <strong>Medium</strong>
+                    <span>10 Slots • Standard Rules</span>
+                </button>
+                <button class="mode-btn" onclick="startGame('hard')">
+                    <strong>Hard</strong>
+                    <span>20 Slots • No Skips</span>
+                </button>
+                <button class="mode-btn" onclick="startGame('extreme')">
+                    <strong>Extreme</strong>
+                    <span>10 Slots • Range 1-100</span>
+                </button>
+            </div>
+            <button class="close-btn" onclick="closeAllModals()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- ABOUT MODAL -->
+    <div id="about-modal" class="overlay">
+        <div class="modal about-modal">
+            <h2>About NumLock</h2>
+            <div class="about-content">
+                <div class="about-section">
+                    <h3>The Game</h3>
+                    <p>NumLock is a strategic puzzle game that combines probability with tactical decision-making. Every roll matters, and one wrong placement can determine your fate.</p>
+                </div>
+                <div class="about-section">
+                    <h3>How It Works</h3>
+                    <p><strong>Goal:</strong> Fill all slots with numbers in strictly ascending order.</p>
+                    <p>Roll the dice, choose where to place your number wisely—once placed, numbers cannot be moved. If you run out of valid positions, it's game over.</p>
+                </div>
+                <div class="about-section">
+                    <h3>Strategy Tips</h3>
+                    <ul class="tips-list">
+                        <li>Save high numbers for the rightmost slots</li>
+                        <li>Low rolls early = more flexibility later</li>
+                        <li>Use skips strategically—they're limited</li>
+                    </ul>
+                </div>
+            </div>
+            <button class="modal-btn" onclick="closeAllModals()">Close</button>
+        </div>
+    </div>
+
+    <!-- WIN MODAL -->
+    <div id="game-end-modal" class="overlay">
+        <div class="modal win-modal">
+            <h2 id="end-title">Completed!</h2>
+            <p id="end-message">All slots filled successfully.</p>
+            <button class="modal-btn" onclick="resetGame()">Play Again</button>
+            <button class="close-btn" onclick="returnToMenu()">Main Menu</button>
+        </div>
+    </div>
+
+    <!-- Linked JS -->
+    <script src="script.js"></script>
+</body>
+</html>
